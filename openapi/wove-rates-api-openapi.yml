@@ -1,0 +1,593 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Rates API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Rates
+  description: Query freight rates from your Query Bank
+paths:
+  /api/v1/external/rates/query:
+    post:
+      tags:
+      - Rates
+      summary: Query freight rates
+      description: 'Query freight rates from your Query Bank with flexible location and container filtering.
+
+
+        **Location Filtering**:
+
+        - Use `origins` and `destinations` for door-to-door moves (inland points)
+
+        - Use `loadingPorts` and `dischargePorts` for port-to-port moves
+
+        - Combine both for door-to-port or port-to-door queries
+
+        - Region codes like USWC, USEC are supported for broader searches
+
+
+        **Rate Structure**:
+
+        Each rate includes:
+
+        - Route information with all legs (pre-carriage, main, on-carriage)
+
+        - Container rates with per-leg breakdown
+
+        - Applicable surcharges with container-specific amounts
+
+
+        **Pagination**:
+
+        Results are paginated with a default limit of 100 rates per request.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryBankRateQueryRequest'
+            examples:
+              port_to_port:
+                summary: Port-to-port query
+                value:
+                  loadingPorts:
+                  - CNSHA
+                  - CNNBO
+                  dischargePorts:
+                  - USLAX
+                  - USLGB
+                  containerType: dry
+                  containerSizes:
+                  - 40ft
+                  - 40ft_hc
+                  effectiveDate: '2024-01-15'
+                  limit: 50
+              door_to_door:
+                summary: Door-to-door with regions
+                value:
+                  origins:
+                  - USWC
+                  destinations:
+                  - CNSHA
+                  - CNNBO
+                  containerType: reefer
+                  carrierCodes:
+                  - MAEU
+                  - MSCU
+              simple:
+                summary: Simple query
+                value:
+                  loadingPorts:
+                  - CNSHA
+                  dischargePorts:
+                  - USLAX
+      responses:
+        '200':
+          description: Rates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/QueryBankRateQueryResponse'
+              example:
+                success: true
+                data:
+                  rates:
+                  - id: rate_abc123
+                    portOfLoading:
+                      code: CNSHA
+                      name: Shanghai
+                      type: port
+                    portOfDischarge:
+                      code: USLAX
+                      name: Los Angeles
+                      type: port
+                    carrierCode: MAEU
+                    carrierName: Maersk
+                    effectiveDate: '2024-01-01'
+                    expiryDate: '2024-03-31'
+                    transitTime: 14
+                    legs:
+                    - type: main
+                      origin:
+                        code: CNSHA
+                        name: Shanghai
+                        type: port
+                      destination:
+                        code: USLAX
+                        name: Los Angeles
+                        type: port
+                      mode: ocean
+                    containerRates:
+                    - containerType: dry
+                      containerSize: 40ft
+                      amount: 2500
+                      currency: USD
+                    - containerType: dry
+                      containerSize: 40ft_hc
+                      amount: 2700
+                      currency: USD
+                    surcharges:
+                    - code: BAF
+                      name: Bunker Adjustment Factor
+                      applicability: subject_to
+                      basis: per_container
+                      containerRates:
+                      - containerSize: 40ft
+                        amount: 150
+                        currency: USD
+                      - containerSize: 40ft_hc
+                        amount: 150
+                        currency: USD
+                    sourceId: '1234567890123456789'
+                    sourceName: carrier_rates_2024.xlsx
+                  metadata:
+                    totalRates: 1
+                    sourcesSearched: 5
+                    queryTimeMs: 45
+        '400':
+          description: Bad request - invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions - requires rates:read scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    QueryBankRateQueryResponse:
+      type: object
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedRate'
+        metadata:
+          type: object
+          properties:
+            totalRates:
+              type: integer
+              description: Total number of matching rates
+            sourcesSearched:
+              type: integer
+              description: Number of sources searched
+            queryTimeMs:
+              type: integer
+              description: Query execution time in milliseconds
+    CombinedContainerRate:
+      type: object
+      properties:
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        amount:
+          type: number
+          description: Total combined rate amount
+        currency:
+          type: string
+          example: USD
+        breakdown:
+          type: object
+          properties:
+            preCarriage:
+              type: number
+              description: Pre-carriage portion
+            main:
+              type: number
+              description: Ocean freight portion
+            onCarriage:
+              type: number
+              description: On-carriage portion
+          description: Per-leg breakdown of the total amount
+      required:
+      - containerType
+      - containerSize
+      - amount
+      - currency
+    SurchargeContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+          - all
+        amount:
+          type: number
+        currency:
+          type: string
+          example: USD
+      required:
+      - containerSize
+      - amount
+      - currency
+    LegContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+        amount:
+          type: number
+          description: Rate amount
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: USD
+      required:
+      - containerSize
+      - containerType
+      - amount
+      - currency
+    CombinedRate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the rate (hash for deduplication)
+        placeOfReceipt:
+          description: Origin inland point (for pre-carriage)
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        portOfLoading:
+          description: Port of loading
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        portOfDischarge:
+          description: Port of discharge
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        placeOfDelivery:
+          description: Destination inland point (for on-carriage)
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        viaPorts:
+          description: Transshipment ports in order
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationInfo'
+        carrierCode:
+          type: string
+          description: Carrier SCAC code
+        carrierName:
+          type: string
+          description: Carrier display name
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        commodityType:
+          type: string
+        transitTime:
+          type: integer
+          description: Transit time in days
+        legs:
+          description: Rate breakdown by leg (pre-carriage, main, on-carriage)
+          type: array
+          items:
+            $ref: '#/components/schemas/RateLeg'
+        containerRates:
+          description: Container-specific pricing
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedContainerRate'
+        surcharges:
+          description: Applicable surcharges
+          type: array
+          items:
+            $ref: '#/components/schemas/RateSurcharge'
+        sourceId:
+          type: string
+          description: Source ID where this rate originated
+        sourceName:
+          type: string
+          description: Source filename
+      required:
+      - id
+      - portOfLoading
+      - portOfDischarge
+      - carrierCode
+      - containerRates
+      - sourceId
+      - sourceName
+    QueryBankRateQueryRequest:
+      type: object
+      properties:
+        origins:
+          type: array
+          items:
+            type: string
+          description: Inland origin codes or region codes (USWC, USEC, etc.) for door moves
+          example:
+          - USWC
+          - USCHI
+        destinations:
+          type: array
+          items:
+            type: string
+          description: Inland destination codes or region codes for door moves
+          example:
+          - CNSHA
+          - CNNBO
+        loadingPorts:
+          type: array
+          items:
+            type: string
+          description: Port of loading codes (UN/LOCODE format)
+          example:
+          - CNSHA
+          - CNNBO
+        dischargePorts:
+          type: array
+          items:
+            type: string
+          description: Port of discharge codes (UN/LOCODE format)
+          example:
+          - USLAX
+          - USLGB
+        effectiveDate:
+          type: string
+          format: date
+          description: Filter rates effective on or after this date
+        expiryDate:
+          type: string
+          format: date
+          description: Filter rates that haven't expired by this date
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          description: Container type filter
+        containerSizes:
+          type: array
+          items:
+            type: string
+            enum:
+            - 20ft
+            - 40ft
+            - 40ft_hc
+            - 45ft
+          description: Container size filter
+        carrierCodes:
+          type: array
+          items:
+            type: string
+          description: Filter by specific carrier SCAC codes
+          example:
+          - MAEU
+          - MSCU
+          - COSU
+        commodityType:
+          type: string
+          description: Filter by commodity type
+        limit:
+          type: integer
+          default: 100
+          maximum: 500
+          description: Maximum number of rates to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of rates to skip for pagination
+    LocationInfo:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Location code (UN/LOCODE for ports)
+          example: CNSHA
+        name:
+          type: string
+          description: Location display name
+          example: Shanghai
+        type:
+          type: string
+          enum:
+          - port
+          - city
+          - address
+          - region
+          description: Type of location
+      required:
+      - code
+      - type
+    RateSurcharge:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Surcharge code (e.g., BAF, CAF, THC)
+          example: BAF
+        name:
+          type: string
+          description: Surcharge display name
+          example: Bunker Adjustment Factor
+        applicability:
+          type: string
+          enum:
+          - inclusive
+          - subject_to
+          - not_subject_to
+          - not_applicable
+          description: Whether this surcharge is included in base rate or additional
+        basis:
+          type: string
+          description: Charging basis (e.g., per_container, per_bl, percentage)
+          example: per_container
+        amount:
+          type: number
+          description: Default surcharge amount (when not container-specific)
+        currency:
+          type: string
+          example: USD
+        containerRates:
+          description: Container-specific surcharge amounts
+          type: array
+          items:
+            $ref: '#/components/schemas/SurchargeContainerRate'
+        percentage:
+          type: number
+          description: Percentage-based surcharge (if applicable)
+        applicablePorts:
+          type: array
+          items:
+            type: string
+          description: Specific ports this surcharge applies to
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+      required:
+      - code
+      - name
+      - applicability
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+    RateLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - pre_carriage
+          - main
+          - on_carriage
+          description: Leg type
+        origin:
+          $ref: '#/components/schemas/LocationInfo'
+        destination:
+          $ref: '#/components/schemas/LocationInfo'
+        mode:
+          type: string
+          enum:
+          - truck
+          - rail
+          - barge
+          - ocean
+          description: Transport mode for this leg
+        rates:
+          description: Container rates for this specific leg
+          type: array
+          items:
+            $ref: '#/components/schemas/LegContainerRate'
+      required:
+      - type
+      - origin
+      - destination
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint

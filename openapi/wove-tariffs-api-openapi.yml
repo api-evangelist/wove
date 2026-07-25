@@ -1,0 +1,760 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Tariffs API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Tariffs
+  description: Duty and tariff rate lookup by HS code with customer-specific overrides
+paths:
+  /api/v1/external/tariffs/lookup:
+    get:
+      tags:
+      - Tariffs
+      summary: Look up duty rates by HS code
+      description: 'Look up import duty rates for a specific HS/HTS code.
+
+
+        **Features**:
+
+        - Supports US, EU, Canada, and Australia tariff schedules
+
+        - Returns MFN rates, preferential rates, and additional duties (Section 301, 232, etc.)
+
+        - Calculates landed cost including customs fees
+
+        - Supports FTA program selection
+
+        - Customer-specific tariff overrides are automatically applied
+
+
+        **HS Code Format**:
+
+        - US: 10-digit HTS code (e.g., "6209205000" or "6209.20.50.00")
+
+        - Other countries: 4-12 digit HS code
+
+
+        **Additional Duties**:
+
+        For products subject to Section 232 tariffs (steel/aluminum derivatives),
+
+        you may need to provide component percentages via `componentValues`.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: hsCode
+        in: query
+        required: true
+        schema:
+          type: string
+        description: HS/HTS code to look up (e.g., "6209205000" or "6209.20.50.00")
+        example: '8471609050'
+      - name: originCountry
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Z]{2}$
+        description: Origin country code (2-letter ISO)
+        example: CN
+      - name: destinationCountry
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Z]{2}$
+        description: Destination country code (2-letter ISO)
+        example: US
+      - name: customsValue
+        in: query
+        required: false
+        schema:
+          type: number
+        description: Customs value for duty calculation
+        example: 10000
+      - name: currency
+        in: query
+        required: false
+        schema:
+          type: string
+          default: USD
+        description: Currency code for calculations
+        example: USD
+      - name: entryDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Entry date for historical rate lookup (ISO date)
+        example: '2024-01-15'
+      - name: dateOfLoading
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Date of loading for historical rate lookup (used if entryDate not provided)
+      - name: transportMode
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - ocean
+          - air
+          - land
+          - rail
+          default: ocean
+        description: Transport mode for customs fee calculations
+      - name: componentValues
+        in: query
+        required: false
+        schema:
+          type: string
+        description: 'JSON object of component values for Section 232 calculations (e.g., ''{"aluminum": 30}'' for 30% aluminum content)
+
+          '
+        example: '{"aluminum": 30}'
+      - name: exclusionCodes
+        in: query
+        required: false
+        schema:
+          type: string
+        description: JSON array of Chapter 99 exclusion codes to apply (e.g., '["9903.01.21"]')
+        example: '["9903.01.21"]'
+      - name: includeFtaOptions
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        description: Whether to include FTA options in the response
+      - name: applyFtaProgram
+        in: query
+        required: false
+        schema:
+          type: string
+        description: FTA program code to apply (e.g., 'US_AU_FTA')
+        example: US_AU_FTA
+      - name: weightKg
+        in: query
+        required: false
+        schema:
+          type: number
+        description: Weight in kilograms for per-kg fee calculations
+      responses:
+        '200':
+          description: Tariff lookup successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      tariffLine:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          code:
+                            type: string
+                            example: 8471.60.90.50
+                          description:
+                            type: string
+                            example: Other data processing equipment
+                          fullDescription:
+                            type: string
+                          hs6:
+                            type: string
+                            example: '847160'
+                          uomPrimary:
+                            type: string
+                            example: 'NO'
+                      applicableRate:
+                        type: object
+                        properties:
+                          regime:
+                            type: string
+                            example: MFN
+                          programCode:
+                            type: string
+                            example: US_MFN
+                          rateType:
+                            type: string
+                            example: AD_VALOREM
+                          adValoremRate:
+                            type: number
+                            example: 0
+                          formulaDescription:
+                            type: string
+                            example: Free
+                      baseRate:
+                        type: object
+                        description: Base MFN/preferential rate without additional duties
+                      mfnRate:
+                        type: number
+                        description: MFN rate percentage
+                        example: 0
+                      additionalDuties:
+                        type: array
+                        description: Additional duties (Section 301, 232, etc.)
+                        items:
+                          type: object
+                          properties:
+                            programCode:
+                              type: string
+                            programName:
+                              type: string
+                            rate:
+                              type: number
+                            rateType:
+                              type: string
+                      calculation:
+                        type: object
+                        description: Duty calculation breakdown (when customsValue provided)
+                        properties:
+                          dutyAmount:
+                            type: number
+                          baseDutyAmount:
+                            type: number
+                          additionalDutyAmount:
+                            type: number
+                          currency:
+                            type: string
+                          effectiveRate:
+                            type: number
+                      ftaOptions:
+                        type: array
+                        description: Available FTA programs
+                        items:
+                          type: object
+                          properties:
+                            program:
+                              type: string
+                            programName:
+                              type: string
+                            rate:
+                              type: number
+                      customsFees:
+                        type: object
+                        description: Customs fees breakdown
+                        properties:
+                          totalFees:
+                            type: number
+                          fees:
+                            type: array
+                            items:
+                              type: object
+                      landedCost:
+                        type: object
+                        description: Total landed cost breakdown
+                        properties:
+                          customsValue:
+                            type: number
+                          totalDuties:
+                            type: number
+                          totalFees:
+                            type: number
+                          grandTotal:
+                            type: number
+              example:
+                success: true
+                data:
+                  tariffLine:
+                    id: '12345'
+                    code: 8471.60.90.50
+                    description: Other data processing equipment
+                    hs6: '847160'
+                    uomPrimary: 'NO'
+                  applicableRate:
+                    regime: MFN
+                    programCode: US_MFN
+                    rateType: AD_VALOREM
+                    adValoremRate: 0
+                    formulaDescription: Free
+                  mfnRate: 0
+                  additionalDuties: []
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_hs_code:
+                  summary: Missing HS code
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Query parameter "hsCode" is required
+                invalid_hs_code:
+                  summary: Invalid HS code format
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Invalid HS code format. Expected 4-12 digit code.
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions - requires tariffs:read scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Tariff line not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: NOT_FOUND
+                  message: No tariff line found for HS code 1234567890
+  /api/v1/external/tariffs/search:
+    get:
+      tags:
+      - Tariffs
+      summary: Search tariffs by product description
+      description: 'Search for tariff lines using semantic search on product descriptions.
+
+
+        This endpoint uses AI-powered semantic search to find relevant HS codes
+
+        based on natural language product descriptions. Results are ranked by
+
+        relevance to the search query.
+
+
+        **Note**: This endpoint excludes Chapter 99 codes (9903.xx.xx) as they
+
+        are administrative tariff codes, not product classifications.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Product description to search for
+        example: laptop computer
+      - name: country
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Z]{2}$
+        description: Destination country code (2-letter ISO)
+        example: US
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Maximum number of results (max 50)
+      - name: entryDate
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Entry date for historical rate lookup (ISO date)
+      - name: dateOfLoading
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+        description: Date of loading for historical rate lookup
+      responses:
+        '200':
+          description: Search results retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            code:
+                              type: string
+                              example: 8471.30.01.00
+                            description:
+                              type: string
+                              example: Portable automatic data processing machines
+                            fullDescription:
+                              type: string
+                            similarity:
+                              type: number
+                              description: Relevance score (0-1)
+                              example: 0.89
+              example:
+                success: true
+                data:
+                  results:
+                  - id: '12345'
+                    code: 8471.30.01.00
+                    description: Portable automatic data processing machines, weighing not more than 10 kg
+                    similarity: 0.92
+                  - id: '12346'
+                    code: 8471.41.01.00
+                    description: Other automatic data processing machines comprising in the same housing at least a CPU and an input and output unit
+                    similarity: 0.85
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions - requires tariffs:read scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/external/tariffs/batch-lookup:
+    post:
+      tags:
+      - Tariffs
+      summary: Batch look up duty rates for multiple HS codes, origins, destinations, or entry dates
+      description: 'Look up import duty rates for a batch of items in a single request.
+
+
+        Each item is a self-contained query carrying its own `hsCode`, `originCountry`,
+
+        `destinationCountry`, and (optionally) `entryDate`, so callers can mix and match
+
+        any combination of dimensions in a single request.
+
+
+        **Behaviour**:
+
+        - Items are processed independently; a failure on one item does not abort the batch.
+
+        - Results are returned in request order and matched to each item by the caller-provided `id`.
+
+        - Each item counts toward OAuth rate limits as one request.
+
+
+        **Limits**:
+
+        - Maximum 100 items per request.
+
+        - Item `id` values must be unique within a request.
+
+
+        For per-item parameter semantics (HS code format, country codes, FTA programs,
+
+        component values, exclusion codes, etc.) see `POST /api/v1/external/tariffs/lookup`.
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - items
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    type: object
+                    required:
+                    - id
+                    - hsCode
+                    - originCountry
+                    - destinationCountry
+                    properties:
+                      id:
+                        type: string
+                        description: Caller-provided identifier echoed back in the response. Must be unique within the request.
+                        example: q1
+                      hsCode:
+                        type: string
+                        description: HS/HTS code (e.g., "6209205000" or "6209.20.50.00")
+                        example: '8471609050'
+                      originCountry:
+                        type: string
+                        pattern: ^[A-Za-z]{2}$
+                        description: Origin country code (2-letter ISO)
+                        example: CN
+                      destinationCountry:
+                        type: string
+                        pattern: ^[A-Za-z]{2}$
+                        description: Destination country code (2-letter ISO)
+                        example: US
+                      customsValue:
+                        type: number
+                        example: 10000
+                      currency:
+                        type: string
+                        default: USD
+                        example: USD
+                      entryDate:
+                        type: string
+                        format: date
+                        description: Entry date for historical rate lookup (ISO date)
+                        example: '2024-01-15'
+                      dateOfLoading:
+                        type: string
+                        format: date
+                      transportMode:
+                        type: string
+                        enum:
+                        - ocean
+                        - air
+                        - land
+                        - rail
+                        default: ocean
+                      componentValues:
+                        type: object
+                        additionalProperties:
+                          oneOf:
+                          - type: number
+                          - type: boolean
+                        description: 'Component values for Section 232 calculations (e.g., {"aluminum": 30} for 30% aluminum content)'
+                        example:
+                          aluminum: 30
+                      exclusionCodes:
+                        type: array
+                        items:
+                          type: string
+                        description: Chapter 99 exclusion codes to apply
+                        example:
+                        - 9903.01.21
+                      includeFtaOptions:
+                        type: boolean
+                      applyFtaProgram:
+                        type: string
+                        example: US_AU_FTA
+                      weightKg:
+                        type: number
+            examples:
+              mixed_origins:
+                summary: Same HS code across multiple origins
+                value:
+                  items:
+                  - id: cn
+                    hsCode: '8471609050'
+                    originCountry: CN
+                    destinationCountry: US
+                    customsValue: 10000
+                  - id: mx
+                    hsCode: '8471609050'
+                    originCountry: MX
+                    destinationCountry: US
+                    customsValue: 10000
+                  - id: de
+                    hsCode: '8471609050'
+                    originCountry: DE
+                    destinationCountry: US
+                    customsValue: 10000
+              mixed_dates:
+                summary: Same HS code/origin across historical entry dates
+                value:
+                  items:
+                  - id: '2024'
+                    hsCode: '6209205000'
+                    originCountry: CN
+                    destinationCountry: US
+                    entryDate: '2024-06-01'
+                  - id: '2025'
+                    hsCode: '6209205000'
+                    originCountry: CN
+                    destinationCountry: US
+                    entryDate: '2025-06-01'
+              mixed_codes:
+                summary: Multiple HS codes from one origin
+                value:
+                  items:
+                  - id: a
+                    hsCode: '6209205000'
+                    originCountry: CN
+                    destinationCountry: US
+                  - id: b
+                    hsCode: '8471609050'
+                    originCountry: CN
+                    destinationCountry: US
+      responses:
+        '200':
+          description: Batch lookup processed. Per-item status is reported via the `success` flag on each result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      results:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: Caller-provided id from the matching request item
+                            success:
+                              type: boolean
+                            data:
+                              type: object
+                              description: Tariff lookup result (same shape as `GET /api/v1/external/tariffs/lookup`). Present when success is true.
+                            error:
+                              type: string
+                              description: Error message. Present when success is false.
+                            status:
+                              type: integer
+                              description: HTTP-style status code for the per-item failure (e.g., 400, 404, 500). Present when success is false.
+              example:
+                success: true
+                data:
+                  results:
+                  - id: cn
+                    success: true
+                    data:
+                      tariffLine:
+                        code: 8471.60.90.50
+                        description: Other data processing equipment
+                      applicableRate:
+                        regime: MFN
+                        adValoremRate: 0
+                      additionalDuties: []
+                  - id: mx
+                    success: false
+                    error: No tariff line found for HS code 8471609050
+                    status: 404
+        '400':
+          description: Bad request - request body invalid, items array empty, too many items, or duplicate ids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_items:
+                  summary: Empty items array
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: '"items" array must not be empty'
+                too_many_items:
+                  summary: Over 100 items
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Maximum 100 items allowed per batch
+                duplicate_id:
+                  summary: Duplicate item id
+                  value:
+                    success: false
+                    error:
+                      code: VALIDATION_ERROR
+                      message: Duplicate item id "q1" in request
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions - requires tariffs:read scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint

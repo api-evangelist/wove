@@ -1,0 +1,447 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Webhooks API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Webhooks
+  description: Webhook management for async notifications
+paths:
+  /api/v1/external/webhooks:
+    get:
+      tags:
+      - Webhooks
+      summary: List webhooks
+      description: "Retrieve all configured webhooks for your organization.\n\n## Webhook Events\n\nThe following events can trigger webhooks:\n- `extraction.completed` - Document extraction successful\n- `extraction.failed` - Document extraction failed\n- `validation.completed` - Cross-validation completed\n- `validation.failed` - Cross-validation failed\n- `merge.completed` - Document merge completed\n- `merge.failed` - Document merge failed\n- `document.uploaded` - New document uploaded\n- `document.deleted` - Document deleted\n- `shipment.created` - Shipment created\n- `shipment.updated` - Shipment updated\n- `source.processing.completed` - Rate sheet source processing completed\n- `source.processing.failed` - Rate sheet source processing failed\n\n## Payload Format\n\nAll webhook payloads follow this structure:\n```json\n{\n  \"event\": \"extraction.completed\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"data\": { /* event-specific data */ }\n}\n```\n\nSee the schemas section for detailed payload structures for each event type.\n"
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Webhooks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+    post:
+      tags:
+      - Webhooks
+      summary: Create webhook
+      description: "Create a new webhook endpoint for receiving notifications.\n\n## Example Payloads\n\n### extraction.completed\n```json\n{\n  \"event\": \"extraction.completed\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"data\": {\n    \"document\": { /* WebhookDocument object */ },\n    \"entityType\": \"shipments\",\n    \"entityId\": \"1014560123456789012\"\n  }\n}\n```\n\n### validation.completed\n```json\n{\n  \"event\": \"validation.completed\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\",\n  \"data\": {\n    \"jobId\": \"1014560123456789012\",\n    \"entityId\": \"1014560123456789012\",\n    \"entityType\": \"shipments\",\n    \"documents\": [ /* array of WebhookDocument objects */ ],\n    \"validationResult\": { /* validation results */ },\n    \"itemsValidated\": 15,\n    \"issuesFound\": 2,\n    \"completedAt\": \"2024-01-15T10:30:00.000Z\",\n    \"type\": \"cross-validation\"\n  }\n}\n```\n"
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+            examples:
+              allEvents:
+                summary: Subscribe to all document events
+                value:
+                  url: https://your-app.com/webhooks
+                  events:
+                  - extraction.completed
+                  - extraction.failed
+                  - validation.completed
+                  - validation.failed
+                  - merge.completed
+                  - merge.failed
+                  description: Production webhook for document processing
+              extractionOnly:
+                summary: Subscribe to extraction events only
+                value:
+                  url: https://your-app.com/webhooks/extraction
+                  events:
+                  - extraction.completed
+                  - extraction.failed
+                  description: Extraction notifications
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/Webhook'
+                    - type: object
+                      properties:
+                        secret:
+                          type: string
+                          description: Webhook secret for signature verification
+                          example: whsec_1234567890abcdef
+        '400':
+          description: Invalid request parameters
+  /api/v1/external/webhooks/{webhookId}:
+    get:
+      tags:
+      - Webhooks
+      summary: Get webhook details
+      description: Retrieve details of a specific webhook.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique webhook identifier
+      responses:
+        '200':
+          description: Webhook details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Webhook'
+        '404':
+          description: Webhook not found
+    put:
+      tags:
+      - Webhooks
+      summary: Update webhook
+      description: Update webhook configuration.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique webhook identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                active:
+                  type: boolean
+                description:
+                  type: string
+                headers:
+                  type: object
+                  additionalProperties:
+                    type: string
+      responses:
+        '200':
+          description: Webhook updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Webhook'
+        '404':
+          description: Webhook not found
+    delete:
+      tags:
+      - Webhooks
+      summary: Delete webhook
+      description: Delete a webhook endpoint.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique webhook identifier
+      responses:
+        '200':
+          description: Webhook deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Webhook not found
+  /api/v1/external/webhooks/{webhookId}/test:
+    post:
+      tags:
+      - Webhooks
+      summary: Test webhook
+      description: Send a test event to the webhook endpoint.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique webhook identifier
+      responses:
+        '200':
+          description: Test completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - success
+                        - failed
+                      statusCode:
+                        type: integer
+                      duration:
+                        type: integer
+                        description: Response time in milliseconds
+                      response:
+                        type: string
+                        description: Response body from webhook endpoint
+        '404':
+          description: Webhook not found
+  /api/v1/external/webhooks/test:
+    post:
+      tags:
+      - Webhooks
+      summary: Test webhook URL
+      description: Test a webhook URL before creating it.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: HTTPS URL to test
+                event:
+                  type: string
+                  description: Event type to simulate
+                  default: webhook.test
+              required:
+              - url
+      responses:
+        '200':
+          description: Test completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      payload:
+                        type: object
+                        description: The test payload that was sent
+        '400':
+          description: Invalid URL or test failed
+  /api/v1/external/webhooks/{webhookId}/deliveries:
+    get:
+      tags:
+      - Webhooks
+      summary: Get webhook deliveries
+      description: Retrieve delivery history for a webhook.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: webhookId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique webhook identifier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of deliveries to return
+      responses:
+        '200':
+          description: Delivery history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        url:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - success
+                          - failed
+                          - pending
+                        attempt:
+                          type: integer
+                        responseStatus:
+                          type: integer
+                        error:
+                          type: string
+                          description: Error message if failed
+                        createdAt:
+                          type: string
+                          format: date-time
+                        completedAt:
+                          type: string
+                          format: date-time
+        '404':
+          description: Webhook not found
+components:
+  schemas:
+    CreateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS URL to receive webhook notifications
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+            - extraction.completed
+            - extraction.failed
+            - validation.completed
+            - validation.failed
+            - merge.completed
+            - merge.failed
+            - document.uploaded
+            - document.deleted
+            - shipment.created
+            - shipment.updated
+            - source.processing.completed
+            - source.processing.failed
+            - webhook.test
+          minItems: 1
+        description:
+          type: string
+      required:
+      - url
+      - events
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        message:
+          type: string
+          description: Optional success message
+      required:
+      - success
+      - data
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014560123456789012'
+        url:
+          type: string
+          format: uri
+          example: https://your-app.com/webhook
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+            - extraction.completed
+            - extraction.failed
+            - validation.completed
+            - validation.failed
+            - merge.completed
+            - merge.failed
+            - document.uploaded
+            - document.deleted
+            - shipment.created
+            - shipment.updated
+            - source.processing.completed
+            - source.processing.failed
+            - webhook.test
+        description:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastTriggeredAt:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint

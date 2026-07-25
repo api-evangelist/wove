@@ -1,0 +1,2317 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Shipments API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Shipments
+  description: Shipment management operations
+paths:
+  /api/v1/external/shipments:
+    get:
+      tags:
+      - Shipments
+      summary: List shipments
+      description: 'Retrieve a paginated list of shipments for your organization.
+
+        Results are ordered by creation date (newest first).
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of items per page
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - booked
+          - pending
+          - in_transit
+          - delivered
+          - cancelled
+        description: Filter by shipment status
+      - name: shipmentType
+        in: query
+        schema:
+          type: string
+          enum:
+          - FCL
+          - LCL
+          - Air
+        description: Filter by shipment type
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search shipments by name or ID
+      responses:
+        '200':
+          description: Shipments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentSummary'
+                      pagination:
+                        type: object
+                        properties:
+                          page:
+                            type: integer
+                            example: 1
+                          limit:
+                            type: integer
+                            example: 20
+                          total:
+                            type: integer
+                            example: 150
+                          totalPages:
+                            type: integer
+                            example: 8
+                          hasNext:
+                            type: boolean
+                            example: true
+                          hasPrev:
+                            type: boolean
+                            example: false
+    post:
+      tags:
+      - Shipments
+      summary: Create shipment
+      description: Create a new shipment in draft status.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateShipmentRequest'
+      responses:
+        '201':
+          description: Shipment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentDetails'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/external/shipments/{shipmentId}:
+    get:
+      tags:
+      - Shipments
+      summary: Get shipment details
+      description: Retrieve detailed information about a specific shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '200':
+          description: Shipment details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentDetails'
+        '404':
+          description: Shipment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+      - Shipments
+      summary: Update shipment
+      description: Update an existing shipment's details.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateShipmentRequest'
+      responses:
+        '200':
+          description: 'Shipment updated successfully
+
+            '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentDetails'
+        '404':
+          description: Shipment not found
+    delete:
+      tags:
+      - Shipments
+      summary: Delete shipment
+      description: Delete a shipment and all associated data.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '204':
+          description: Shipment deleted successfully
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/details:
+    get:
+      tags:
+      - Shipments
+      summary: Get detailed shipment information
+      description: Retrieve comprehensive shipment details including items and containers.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '200':
+          description: Detailed shipment information retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      shipment:
+                        $ref: '#/components/schemas/ShipmentDetails'
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentItem'
+                      containers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Container'
+        '404':
+          description: Shipment not found
+    put:
+      tags:
+      - Shipments
+      summary: Update shipment information
+      description: "Update shipment-level details only. \nTo update containers, packages, or items, use the respective CRUD endpoints:\n- Containers: PUT /shipments/{shipmentId}/containers/{containerId}\n- Packages: PUT /shipments/{shipmentId}/packages/{packageId}\n- Items: PUT /shipments/{shipmentId}/items/{itemId}\n"
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateShipmentDetailsRequest'
+      responses:
+        '200':
+          description: Shipment details updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentDetails'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request parameters
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/events:
+    get:
+      tags:
+      - Shipments
+      summary: Get shipment events
+      description: Retrieve chronological events and milestones for a shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '200':
+          description: Shipment events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      events:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentEvent'
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/validation-items:
+    get:
+      tags:
+      - Shipments
+      summary: Get validation items
+      description: Retrieve all validation items for a shipment with optional filtering.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+        description: Filter by validation item status
+      - name: actionStatus
+        in: query
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - ACCEPTED
+          - IGNORED
+          - OVERRIDDEN
+        description: Filter by validation item action status
+      responses:
+        '200':
+          description: Validation items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ValidationItem'
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/validation-items/{itemId}:
+    put:
+      tags:
+      - Shipments
+      summary: Update validation item
+      description: Update the action status and details of a validation item.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique validation item identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateValidationItemRequest'
+      responses:
+        '200':
+          description: Validation item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    example: Validation item updated successfully
+        '400':
+          description: Invalid request
+        '404':
+          description: Validation item or shipment not found
+  /api/v1/external/shipments/{shipmentId}/validation-items/bulk-update:
+    post:
+      tags:
+      - Shipments
+      summary: Bulk update validation items
+      description: Update multiple validation items at once with the same action.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                itemIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+                  description: Array of validation item IDs to update
+                actionStatus:
+                  type: string
+                  enum:
+                  - ACCEPTED
+                  - IGNORED
+                  - OVERRIDDEN
+                  description: Action to apply to all items
+                actionReason:
+                  type: string
+                  description: Optional reason explaining the action
+              required:
+              - itemIds
+              - actionStatus
+      responses:
+        '200':
+          description: Validation items updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    nullable: true
+                  message:
+                    type: string
+                    example: 5 validation items updated successfully
+        '400':
+          description: Invalid request
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/jobs:
+    get:
+      tags:
+      - Shipments
+      summary: Get shipment jobs
+      description: Retrieve all background jobs (extraction, validation, merge) for a shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '200':
+          description: Jobs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      jobs:
+                        type: object
+                        properties:
+                          crossValidation:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/CrossValidationJob'
+                          merge:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/MergeJob'
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/containers:
+    get:
+      tags:
+      - Shipments
+      summary: List containers
+      description: Retrieve all containers for a specific shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      responses:
+        '200':
+          description: Containers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      containers:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentContainer'
+        '404':
+          description: Shipment not found
+    post:
+      tags:
+      - Shipments
+      summary: Create container
+      description: Add a new container to a shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContainerRequest'
+      responses:
+        '201':
+          description: Container created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentContainer'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/containers/{containerId}:
+    put:
+      tags:
+      - Shipments
+      summary: Update container
+      description: Update an existing container's details.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: containerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique container identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContainerRequest'
+      responses:
+        '200':
+          description: Container updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentContainer'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Container or shipment not found
+    delete:
+      tags:
+      - Shipments
+      summary: Delete container
+      description: Remove a container from a shipment. Associated packages will become loose packages.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: containerId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique container identifier
+      responses:
+        '200':
+          description: Container deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Container or shipment not found
+  /api/v1/external/shipments/{shipmentId}/packages:
+    get:
+      tags:
+      - Shipments
+      summary: List packages
+      description: Retrieve all packages for a specific shipment, optionally filtered by container.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: containerId
+        in: query
+        required: false
+        schema:
+          type: string
+          nullable: true
+        description: Filter packages by container ID (use 'null' for loose packages)
+      responses:
+        '200':
+          description: Packages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      packages:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentPackage'
+        '404':
+          description: Shipment not found
+    post:
+      tags:
+      - Shipments
+      summary: Create package
+      description: Add a new package to a shipment (either in a container or as a loose package).
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePackageRequest'
+      responses:
+        '201':
+          description: Package created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentPackage'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/packages/{packageId}:
+    put:
+      tags:
+      - Shipments
+      summary: Update package
+      description: Update an existing package's details.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: packageId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique package identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePackageRequest'
+      responses:
+        '200':
+          description: Package updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentPackage'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Package or shipment not found
+    delete:
+      tags:
+      - Shipments
+      summary: Delete package
+      description: Remove a package from a shipment. Associated items will be deleted.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: packageId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique package identifier
+      responses:
+        '200':
+          description: Package deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Package or shipment not found
+  /api/v1/external/shipments/{shipmentId}/packages/{packageId}/move:
+    post:
+      tags:
+      - Shipments
+      summary: Move package
+      description: Move a package to a different container or make it a loose package.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: packageId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique package identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                containerId:
+                  type: string
+                  nullable: true
+                  description: Target container ID (null to make it a loose package)
+              required:
+              - containerId
+      responses:
+        '200':
+          description: Package moved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Package, container, or shipment not found
+  /api/v1/external/shipments/{shipmentId}/items:
+    get:
+      tags:
+      - Shipments
+      summary: List items
+      description: Retrieve all items for a specific shipment, optionally filtered by package.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: packageId
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filter items by package ID
+      responses:
+        '200':
+          description: Items retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ShipmentItem'
+        '404':
+          description: Shipment not found
+    post:
+      tags:
+      - Shipments
+      summary: Create item
+      description: Add a new item to a package.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateItemRequest'
+      responses:
+        '201':
+          description: Item created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentItem'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Shipment or package not found
+  /api/v1/external/shipments/{shipmentId}/items/{itemId}:
+    put:
+      tags:
+      - Shipments
+      summary: Update item
+      description: Update an existing item's details.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique item identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemRequest'
+      responses:
+        '200':
+          description: Item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ShipmentItem'
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Item or shipment not found
+    delete:
+      tags:
+      - Shipments
+      summary: Delete item
+      description: Remove an item from a package.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique item identifier
+      responses:
+        '200':
+          description: Item deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                  message:
+                    type: string
+        '404':
+          description: Item or shipment not found
+  /api/v1/external/shipments/{shipmentId}/items/{itemId}/move:
+    post:
+      tags:
+      - Shipments
+      summary: Move item
+      description: Move an item to a different package.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique item identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageId:
+                  type: string
+                  nullable: true
+                  description: Target package ID
+                containerId:
+                  type: string
+                  nullable: true
+                  description: Target container ID (optional)
+              required:
+              - packageId
+      responses:
+        '200':
+          description: Item moved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '400':
+          description: Invalid request data
+        '404':
+          description: Item, package, or shipment not found
+components:
+  schemas:
+    ShipmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727490'
+        status:
+          type: string
+          enum:
+          - draft
+          - pending
+          - booked
+          - in_transit
+          - delivered
+          - cancelled
+          example: draft
+          description: Current status of the shipment
+        name:
+          type: string
+          example: External API Test Shipment
+        shipmentType:
+          type: string
+          enum:
+          - FCL
+          - LCL
+          - AIR
+          - LTL
+          - FTL
+          - RAIL
+          example: LCL
+        commodity:
+          type: string
+          example: Electronics
+        portOfLoading:
+          $ref: '#/components/schemas/PortLocation'
+        portOfDischarge:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfReceiptType:
+          type: string
+          enum:
+          - Port
+          - Airport
+          - Door
+        placeOfReceiptPort:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfReceiptAirport:
+          $ref: '#/components/schemas/AirportLocation'
+        placeOfReceiptAddress:
+          $ref: '#/components/schemas/AddressLocation'
+        placeOfDeliveryType:
+          type: string
+          enum:
+          - Port
+          - Airport
+          - Door
+        placeOfDeliveryPort:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfDeliveryAirport:
+          $ref: '#/components/schemas/AirportLocation'
+        placeOfDeliveryAddress:
+          $ref: '#/components/schemas/AddressLocation'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        documentCount:
+          type: integer
+          example: 5
+          description: Number of documents attached to this shipment
+    AddressLocation:
+      type: object
+      properties:
+        address1:
+          type: string
+          example: 123 Main St
+        address2:
+          type: string
+          example: Suite 100
+        city:
+          type: string
+          example: New York
+        province:
+          type: string
+          example: NY
+        postalCode:
+          type: string
+          example: '10001'
+        country:
+          type: string
+          example: US
+    ShipmentPackage:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727493'
+        containerId:
+          type: string
+          nullable: true
+          description: ID of the container this package belongs to (null for loose packages)
+        packageNumber:
+          type: string
+          example: PKG001
+        packageType:
+          type: string
+          example: CARTON
+        description:
+          type: string
+          nullable: true
+        packageCount:
+          type: integer
+          example: 1
+        lineNumber:
+          type: integer
+          nullable: true
+        grossWeight:
+          type: number
+          nullable: true
+        netWeight:
+          type: number
+          nullable: true
+        volume:
+          type: number
+          nullable: true
+        weightUnit:
+          type: string
+          nullable: true
+        volumeUnit:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipmentItem'
+          description: Items contained in this package
+    Address:
+      type: object
+      description: Physical address
+      properties:
+        street1:
+          type: string
+          description: Street address line 1
+          nullable: true
+        street2:
+          type: string
+          description: Street address line 2
+          nullable: true
+        city:
+          type: string
+          description: City name
+          nullable: true
+        state:
+          type: string
+          description: State or province
+          nullable: true
+        postalCode:
+          type: string
+          description: Postal or ZIP code
+          nullable: true
+        country:
+          type: string
+          description: Country code (2-letter ISO)
+          nullable: true
+    ShipmentEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727495'
+        eventType:
+          type: string
+          example: status_change
+        eventDate:
+          type: string
+          format: date-time
+        eventLocation:
+          type: string
+          example: USLAX
+        eventDescription:
+          type: string
+          example: Status changed from draft to booked
+        createdAt:
+          type: string
+          format: date-time
+    AirportLocation:
+      type: object
+      properties:
+        airportCode:
+          type: string
+          example: LAX
+        airportName:
+          type: string
+          example: Los Angeles International Airport
+        countryCode:
+          type: string
+          example: US
+      required:
+      - airportCode
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+    ShipmentContainer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727492'
+        number:
+          type: string
+          example: MSKU1234567
+        size:
+          type: string
+          example: '40'
+        type:
+          type: string
+          example: HC
+        sizeType:
+          type: string
+          example: 40HC
+          description: Combined size and type (e.g., 20GP, 40HC)
+        sealNumber:
+          type: string
+          example: SEAL123456
+        quantity:
+          type: integer
+          example: 1
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipmentPackage'
+          description: Packages contained in this container
+    CreateContainerRequest:
+      type: object
+      required:
+      - number
+      - sizeType
+      properties:
+        number:
+          type: string
+          description: Container number/identifier
+          example: MSKU1234567
+        sizeType:
+          type: string
+          description: Container size and type (e.g., 20GP, 40HC)
+          example: 20GP
+        sealNumber:
+          type: string
+          description: Container seal number
+        quantity:
+          type: integer
+          description: Number of containers
+          default: 1
+          minimum: 1
+    ValidationItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727496'
+        crossValidationResultId:
+          type: string
+        shipmentId:
+          type: string
+        fieldName:
+          type: string
+          example: invoiceNumber
+        status:
+          type: string
+          example: error
+        reason:
+          type: string
+          example: Invoice numbers do not match across documents
+        suggestion:
+          type: string
+          example: Use invoice number from the commercial invoice
+        files:
+          type: array
+          items:
+            type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+        actionStatus:
+          type: string
+          enum:
+          - PENDING
+          - ACCEPTED
+          - IGNORED
+          - OVERRIDDEN
+        actionTakenById:
+          type: string
+        actionTakenAt:
+          type: string
+          format: date-time
+        actionReason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MergeJob:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+          - merge
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+        progress:
+          type: number
+          description: Progress percentage (0-100)
+        documentIds:
+          type: array
+          items:
+            type: string
+        result:
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    Location:
+      oneOf:
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - Port
+          portCode:
+            type: string
+            example: USNYC
+          portName:
+            type: string
+            example: New York/Newark
+          countryCode:
+            type: string
+            example: US
+        required:
+        - type
+        - portCode
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - Airport
+          airportCode:
+            type: string
+            example: JFK
+          airportName:
+            type: string
+            example: John F. Kennedy International Airport
+          countryCode:
+            type: string
+            example: US
+        required:
+        - type
+        - airportCode
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - Door
+          address1:
+            type: string
+            example: 123 Main St
+          address2:
+            type: string
+            example: Suite 100
+          city:
+            type: string
+            example: New York
+          province:
+            type: string
+            example: NY
+          postalCode:
+            type: string
+            example: '10001'
+          country:
+            type: string
+            example: US
+        required:
+        - type
+        - address1
+        - city
+        - country
+    Carrier:
+      $ref: '#/components/schemas/ShipmentCarrier'
+    UpdateContainerRequest:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Container number/identifier
+        sizeType:
+          type: string
+          description: Container size and type
+        sealNumber:
+          type: string
+          description: Container seal number
+        quantity:
+          type: integer
+          description: Number of containers
+          minimum: 1
+    ShipmentCarrier:
+      type: object
+      properties:
+        code:
+          type: string
+          example: MAEU
+        name:
+          type: string
+          example: Maersk Line
+      required:
+      - code
+      - name
+    CreateItemRequest:
+      type: object
+      properties:
+        packageId:
+          type: string
+          nullable: true
+          description: Package ID this item belongs to
+        containerId:
+          type: string
+          nullable: true
+          description: Container ID (optional)
+        lineNumber:
+          type: integer
+          description: Line number for ordering
+        sku:
+          type: string
+          description: Stock Keeping Unit
+        partNumber:
+          type: string
+          description: Part number
+        description:
+          type: string
+          description: Item description
+        quantity:
+          type: integer
+          description: Quantity of items
+          minimum: 1
+        unitOfMeasure:
+          type: string
+          description: Unit of measure for quantity
+        unitPrice:
+          type: number
+          description: Price per unit
+        amount:
+          type: number
+          description: Total amount
+        currency:
+          type: string
+          description: Currency code
+        countryOfOrigin:
+          type: string
+          description: Country of origin code
+        hsCode:
+          type: string
+          description: Harmonized System code
+        weight:
+          type: number
+          description: Weight per item
+        weightUnit:
+          type: string
+          description: Unit for weight measurement
+    CreatePackageRequest:
+      type: object
+      properties:
+        containerId:
+          type: string
+          nullable: true
+          description: Container ID (null for loose packages)
+        packageNumber:
+          type: string
+          description: Package number/identifier
+        packageType:
+          type: string
+          description: Type of package (e.g., CARTON, PALLET)
+        description:
+          type: string
+          description: Package description
+        packageCount:
+          type: integer
+          description: Number of packages
+          minimum: 1
+        lineNumber:
+          type: integer
+          description: Line number for ordering
+        grossWeight:
+          type: number
+          description: Gross weight of package
+        netWeight:
+          type: number
+          description: Net weight of package
+        volume:
+          type: number
+          description: Volume of package
+        weightUnit:
+          type: string
+          description: Unit for weight measurements
+        volumeUnit:
+          type: string
+          description: Unit for volume measurements
+    UpdateShipmentRequest:
+      allOf:
+      - $ref: '#/components/schemas/CreateShipmentRequest'
+      - type: object
+        description: All fields from CreateShipmentRequest are optional for updates
+    UpdateItemRequest:
+      type: object
+      properties:
+        lineNumber:
+          type: integer
+        sku:
+          type: string
+        partNumber:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        unitOfMeasure:
+          type: string
+        unitPrice:
+          type: number
+        amount:
+          type: number
+        currency:
+          type: string
+        countryOfOrigin:
+          type: string
+        hsCode:
+          type: string
+        weight:
+          type: number
+        weightUnit:
+          type: string
+    PortLocation:
+      type: object
+      properties:
+        portCode:
+          type: string
+          example: USLAX
+        portName:
+          type: string
+          example: Los Angeles
+        countryCode:
+          type: string
+          example: US
+      required:
+      - portCode
+    UpdatePackageRequest:
+      type: object
+      properties:
+        packageNumber:
+          type: string
+        packageType:
+          type: string
+        description:
+          type: string
+        packageCount:
+          type: integer
+          minimum: 1
+        lineNumber:
+          type: integer
+        grossWeight:
+          type: number
+        netWeight:
+          type: number
+        volume:
+          type: number
+        weightUnit:
+          type: string
+        volumeUnit:
+          type: string
+    ReferenceNumber:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727493'
+        type:
+          type: string
+          example: booking
+          description: Type of reference number (booking, invoice, po, etc.)
+        displayNumber:
+          type: string
+          example: BOOK-2024-001
+        cleanedNumber:
+          type: string
+          example: BOOK2024001
+          description: Cleaned version without special characters
+      required:
+      - id
+      - type
+      - displayNumber
+    Organization:
+      type: object
+      description: Organization/company information
+      properties:
+        name:
+          type: string
+          description: Organization name
+        code:
+          type: string
+          description: Organization code or identifier
+          nullable: true
+      required:
+      - name
+    UpdateShipmentDetailsRequest:
+      type: object
+      description: 'Request body for updating shipment-level details only.
+
+        Containers, packages, and items are now managed through separate CRUD endpoints.
+
+        '
+      properties:
+        shipment:
+          type: object
+          properties:
+            carrier:
+              type: string
+            vessel:
+              type: string
+            voyage:
+              type: string
+            incoterm:
+              type: string
+            serviceType:
+              type: string
+            invoiceDate:
+              type: string
+              example: '2024-03-15'
+            dueDate:
+              type: string
+              example: '2024-04-15'
+            issueDate:
+              type: string
+              example: '2024-03-10'
+            shipmentDate:
+              type: string
+              example: '2024-03-20'
+            expectedDeliveryDate:
+              type: string
+              example: '2024-04-05'
+            readyDate:
+              type: string
+              example: '2024-03-18'
+            dateOfSignature:
+              type: string
+              example: '2024-03-10'
+            portOfLoading:
+              type: string
+            portOfDischarge:
+              type: string
+            placeOfReceiptType:
+              type: string
+              enum:
+              - Port
+              - Airport
+              - Door
+            placeOfReceiptPort:
+              $ref: '#/components/schemas/PortLocation'
+            placeOfReceiptAirport:
+              $ref: '#/components/schemas/AirportLocation'
+            placeOfReceiptAddress:
+              $ref: '#/components/schemas/AddressLocation'
+            placeOfDeliveryType:
+              type: string
+              enum:
+              - Port
+              - Airport
+              - Door
+            placeOfDeliveryPort:
+              $ref: '#/components/schemas/PortLocation'
+            placeOfDeliveryAirport:
+              $ref: '#/components/schemas/AirportLocation'
+            placeOfDeliveryAddress:
+              $ref: '#/components/schemas/AddressLocation'
+            referenceNumbers:
+              type: array
+              items:
+                $ref: '#/components/schemas/ReferenceNumber'
+            consigneeName:
+              type: string
+              description: Consignee/receiver company name
+            consigneeAddress:
+              type: object
+              description: Consignee address (JSON object)
+            consigneeContactName:
+              type: string
+              description: Consignee contact person name
+            consigneeContactPhone:
+              type: string
+              description: Consignee contact phone number
+            consigneeContactEmail:
+              type: string
+              format: email
+              description: Consignee contact email address
+            consignorName:
+              type: string
+              description: Consignor company name
+            consignorAddress:
+              type: object
+              description: Consignor address (JSON object)
+            consignorContactName:
+              type: string
+              description: Consignor contact person name
+            consignorContactPhone:
+              type: string
+              description: Consignor contact phone number
+            consignorContactEmail:
+              type: string
+              format: email
+              description: Consignor contact email address
+            notifyPartyName:
+              type: string
+              description: Notify party company name
+            notifyPartyAddress:
+              type: object
+              description: Notify party address (JSON object)
+            notifyPartyContactName:
+              type: string
+              description: Notify party contact person name
+            notifyPartyContactPhone:
+              type: string
+              description: Notify party contact phone number
+            notifyPartyContactEmail:
+              type: string
+              format: email
+              description: Notify party contact email address
+            destinationAgentName:
+              type: string
+              description: Destination agent company name
+            destinationAgentAddress:
+              type: object
+              description: Destination agent address (JSON object)
+            destinationAgentContactName:
+              type: string
+              description: Destination agent contact person name
+            destinationAgentContactPhone:
+              type: string
+              description: Destination agent contact phone number
+            destinationAgentContactEmail:
+              type: string
+              format: email
+              description: Destination agent contact email address
+            totalWeight:
+              type: number
+              nullable: true
+              description: Total weight of all packages
+              example: 1500.5
+            weightUnit:
+              type: string
+              nullable: true
+              description: Unit for weight measurements
+              example: KG
+            totalVolume:
+              type: number
+              nullable: true
+              description: Total volume of all packages
+              example: 25.5
+            volumeUnit:
+              type: string
+              nullable: true
+              description: Unit for volume measurements
+              example: CBM
+            totalPieces:
+              type: integer
+              nullable: true
+              description: Total number of pieces/items
+              example: 500
+            totalPacks:
+              type: integer
+              nullable: true
+              description: Total number of top-level shipping units (e.g., 7 pallets containing 200 cartons)
+              example: 7
+            totalPacksPackageType:
+              type: string
+              nullable: true
+              description: Type of shipping units for totalPacks (e.g., Pallets, Containers)
+              example: Pallets
+            totalValue:
+              type: number
+              nullable: true
+              description: Total declared value of the shipment
+              example: 25000.0
+            currency:
+              type: string
+              nullable: true
+              description: Currency code for the total value (ISO 4217)
+              example: USD
+    UpdateValidationItemRequest:
+      type: object
+      properties:
+        actionStatus:
+          type: string
+          enum:
+          - ACCEPTED
+          - IGNORED
+          - OVERRIDDEN
+        actionReason:
+          type: string
+      required:
+      - actionStatus
+    Container:
+      $ref: '#/components/schemas/ShipmentContainer'
+    ShipmentItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727491'
+        lineNumber:
+          type: integer
+          example: 1
+        sku:
+          type: string
+          example: SKU-12345
+        partNumber:
+          type: string
+          example: PN-67890
+        description:
+          type: string
+          example: Electronic Component
+        quantity:
+          type: number
+          example: 100
+        unitOfMeasure:
+          type: string
+          example: PCS
+        unitPrice:
+          type: number
+          example: 25.5
+        amount:
+          type: number
+          example: 2550.0
+        currency:
+          type: string
+          example: USD
+        countryOfOrigin:
+          type: string
+          example: CN
+        hsCode:
+          type: string
+          example: 8541.10.00
+        weight:
+          type: number
+          example: 150.5
+        weightUnit:
+          type: string
+          example: KG
+        volume:
+          type: number
+          example: 2.5
+        volumeUnit:
+          type: string
+          example: CBM
+        packageNumber:
+          type: string
+          example: PKG-001
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              example: 100
+            width:
+              type: number
+              example: 50
+            height:
+              type: number
+              example: 50
+            unit:
+              type: string
+              example: CM
+    ShipmentDetails:
+      allOf:
+      - $ref: '#/components/schemas/ShipmentSummary'
+      - type: object
+        properties:
+          carrier:
+            $ref: '#/components/schemas/Carrier'
+          vessel:
+            type: string
+            example: MSC OSCAR
+          voyage:
+            type: string
+            example: 123W
+          incoterm:
+            type: string
+            example: FOB
+          serviceType:
+            type: string
+            example: CY-CY
+          invoiceDate:
+            type: string
+            format: date-time
+          dueDate:
+            type: string
+            format: date-time
+          issueDate:
+            type: string
+            format: date-time
+          shipmentDate:
+            type: string
+            format: date-time
+          expectedDeliveryDate:
+            type: string
+            format: date-time
+          readyDate:
+            type: string
+            format: date-time
+          dateOfSignature:
+            type: string
+            format: date-time
+          referenceNumbers:
+            type: array
+            items:
+              $ref: '#/components/schemas/ReferenceNumber'
+          consigneeName:
+            $ref: '#/components/schemas/Organization'
+          consigneeAddress:
+            $ref: '#/components/schemas/Address'
+          consigneeContactName:
+            type: string
+            nullable: true
+          consigneeContactPhone:
+            type: string
+            nullable: true
+          consigneeContactEmail:
+            type: string
+            nullable: true
+          consignorName:
+            $ref: '#/components/schemas/Organization'
+          consignorAddress:
+            $ref: '#/components/schemas/Address'
+          consignorContactName:
+            type: string
+            nullable: true
+          consignorContactPhone:
+            type: string
+            nullable: true
+          consignorContactEmail:
+            type: string
+            nullable: true
+          notifyPartyName:
+            $ref: '#/components/schemas/Organization'
+          notifyPartyAddress:
+            $ref: '#/components/schemas/Address'
+          notifyPartyContactName:
+            type: string
+            nullable: true
+          notifyPartyContactPhone:
+            type: string
+            nullable: true
+          notifyPartyContactEmail:
+            type: string
+            nullable: true
+          destinationAgentName:
+            $ref: '#/components/schemas/Organization'
+          destinationAgentAddress:
+            $ref: '#/components/schemas/Address'
+          destinationAgentContactName:
+            type: string
+            nullable: true
+          destinationAgentContactPhone:
+            type: string
+            nullable: true
+          destinationAgentContactEmail:
+            type: string
+            nullable: true
+          totalWeight:
+            type: number
+            nullable: true
+          weightUnit:
+            type: string
+            nullable: true
+          totalVolume:
+            type: number
+            nullable: true
+          volumeUnit:
+            type: string
+            nullable: true
+          totalPieces:
+            type: number
+            nullable: true
+          totalPacks:
+            type: number
+            nullable: true
+          totalPacksPackageType:
+            type: string
+            nullable: true
+          totalValue:
+            type: number
+            nullable: true
+          currency:
+            type: string
+            nullable: true
+    CrossValidationJob:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+          - cross-validation
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+        progress:
+          type: number
+          description: Progress percentage (0-100)
+        documentIds:
+          type: array
+          items:
+            type: string
+        result:
+          type: object
+          nullable: true
+          properties:
+            validatedFields:
+              type: array
+              items:
+                type: string
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+                  severity:
+                    type: string
+                    enum:
+                    - critical
+                    - warning
+                  suggestion:
+                    type: string
+                    nullable: true
+                  files:
+                    type: array
+                    items:
+                      type: string
+                  documents:
+                    type: array
+                    items:
+                      type: string
+            validationResult:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  field:
+                    type: string
+                  files:
+                    type: array
+                    items:
+                      type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  suggestion:
+                    type: string
+                    nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+    CreateShipmentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: My Shipment
+        shipmentType:
+          type: string
+          enum:
+          - FCL
+          - LCL
+          - AIR
+          - LTL
+          - FTL
+          - RAIL
+          example: FCL
+        commodity:
+          type: string
+          example: Electronics
+        carrier:
+          type: string
+          example: MSC
+        vessel:
+          type: string
+          example: MSC OSCAR
+        voyage:
+          type: string
+          example: 123E
+        incoterm:
+          type: string
+          example: FOB
+        serviceType:
+          type: string
+          example: CY/CY
+        portOfLoading:
+          type: string
+          example: CNSHA
+        portOfDischarge:
+          type: string
+          example: USLAX
+        placeOfReceipt:
+          $ref: '#/components/schemas/Location'
+        placeOfDelivery:
+          $ref: '#/components/schemas/Location'
+        referenceNumbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceNumber'
+        customFields:
+          type: object
+          additionalProperties: true
+      required:
+      - name
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint

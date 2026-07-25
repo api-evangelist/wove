@@ -1,0 +1,1680 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Documents API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Documents
+  description: Document management within shipments
+paths:
+  /api/v1/external/shipments/{shipmentId}/documents:
+    get:
+      tags:
+      - Documents
+      summary: List shipment documents
+      description: Retrieve all documents associated with a specific shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: includeDeleted
+        in: query
+        schema:
+          type: boolean
+        description: Include deleted documents in the response
+      - name: documentTypes
+        in: query
+        schema:
+          type: string
+        description: Filter by document types (comma-separated)
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - uploaded
+          - processing
+          - completed
+          - failed
+        description: Filter by document status
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+    post:
+      tags:
+      - Documents
+      summary: Upload document
+      description: Upload a single document to a shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload
+                documentType:
+                  type: string
+                  description: Document type
+                  example: CommercialInvoice
+              required:
+              - file
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Document'
+                  message:
+                    type: string
+                    example: Document uploaded successfully and extraction queued
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}:
+    get:
+      tags:
+      - Documents
+      summary: Get document details
+      description: Retrieve detailed information about a specific document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      responses:
+        '200':
+          description: Document details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    allOf:
+                    - $ref: '#/components/schemas/Document'
+                    - type: object
+                      properties:
+                        validationItems:
+                          type: array
+                          items:
+                            type: object
+                          description: Associated validation items
+        '404':
+          description: Document not found
+    put:
+      tags:
+      - Documents
+      summary: Update document
+      description: Update document metadata or type.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: Document type
+                name:
+                  type: string
+                  description: Document name
+                isSelected:
+                  type: boolean
+                  description: Whether document is selected
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Document'
+    delete:
+      tags:
+      - Documents
+      summary: Delete document
+      description: Delete a document from the system.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      responses:
+        '204':
+          description: Document deleted successfully
+        '404':
+          description: Document not found
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}/download:
+    get:
+      tags:
+      - Documents
+      summary: Download document
+      description: Download the original document file.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      responses:
+        '200':
+          description: Document file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document not found
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extraction:
+    get:
+      tags:
+      - Documents
+      summary: Get extraction status
+      description: Get the extraction status and results for a document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      responses:
+        '200':
+          description: Extraction status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - pending
+                        - processing
+                        - completed
+                        - failed
+                      extractedData:
+                        type: object
+                      confidence:
+                        type: number
+                      extractedAt:
+                        type: string
+                        format: date-time
+                      extractionMethod:
+                        type: string
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extract:
+    post:
+      tags:
+      - Documents
+      summary: Start extraction
+      description: Start or restart extraction for a document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reprocess:
+                  type: boolean
+                  description: Force reprocessing even if already extracted
+                fields:
+                  type: array
+                  items:
+                    type: string
+                  description: Specific fields to extract
+      responses:
+        '200':
+          description: Extraction started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      jobId:
+                        type: string
+                      message:
+                        type: string
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extracted-data:
+    put:
+      tags:
+      - Documents
+      summary: Update extracted data
+      description: Manually update the extracted data for a document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  description: The extracted data
+                changes:
+                  type: object
+                  description: Description of changes made
+              required:
+              - data
+              - changes
+      responses:
+        '200':
+          description: Extracted data updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                  message:
+                    type: string
+  /api/v1/external/shipments/{shipmentId}/documents/{documentId}/history:
+    get:
+      tags:
+      - Documents
+      summary: Get document history
+      description: Get the history of changes for a document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique document identifier
+      responses:
+        '200':
+          description: Document history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentHistoryEntry'
+  /api/v1/external/shipments/{shipmentId}/documents/validate:
+    post:
+      tags:
+      - Documents
+      summary: Validate documents
+      description: Validate specific documents within a shipment.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+              required:
+              - documentIds
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        enum:
+                        - valid
+                        - errors
+                      issues:
+                        type: array
+                        items:
+                          type: object
+                      validatedAt:
+                        type: string
+                        format: date-time
+                      documentIds:
+                        type: array
+                        items:
+                          type: string
+  /api/v1/external/shipments/{shipmentId}/documents/cross-validate/{jobId}:
+    get:
+      tags:
+      - Documents
+      summary: Get cross-validation job status
+      description: Check the status and results of a cross-validation job.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique job identifier
+      responses:
+        '200':
+          description: Cross-validation status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      job:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+                            enum:
+                            - pending
+                            - processing
+                            - completed
+                            - failed
+                          progress:
+                            type: number
+                          result:
+                            type: object
+                            nullable: true
+                            properties:
+                              validatedFields:
+                                type: array
+                                items:
+                                  type: string
+                              issues:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    field:
+                                      type: string
+                                    message:
+                                      type: string
+                                    severity:
+                                      type: string
+                                      enum:
+                                      - critical
+                                      - warning
+                                    suggestion:
+                                      type: string
+                                      nullable: true
+                                    files:
+                                      type: array
+                                      items:
+                                        type: string
+                                    documents:
+                                      type: array
+                                      items:
+                                        type: string
+                          error:
+                            type: string
+                            nullable: true
+                          createdAt:
+                            type: string
+                            format: date-time
+                          startedAt:
+                            type: string
+                            format: date-time
+                            nullable: true
+                          completedAt:
+                            type: string
+                            format: date-time
+                            nullable: true
+        '404':
+          description: Job not found
+  /api/v1/external/shipments/{shipmentId}/documents/merge/{jobId}:
+    get:
+      tags:
+      - Documents
+      summary: Get merge job status
+      description: Check the status and results of a document merge operation.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      - name: jobId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique job identifier
+      responses:
+        '200':
+          description: Merge status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      job:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          status:
+                            type: string
+                            enum:
+                            - pending
+                            - processing
+                            - completed
+                            - failed
+                          progress:
+                            type: number
+                          result:
+                            nullable: true
+                          error:
+                            type: string
+                            nullable: true
+                          createdAt:
+                            type: string
+                            format: date-time
+                          startedAt:
+                            type: string
+                            format: date-time
+                            nullable: true
+                          completedAt:
+                            type: string
+                            format: date-time
+                            nullable: true
+        '404':
+          description: Job not found
+  /api/v1/external/shipments/{shipmentId}/documents/cross-validate:
+    post:
+      tags:
+      - Documents
+      summary: Cross-validate documents
+      description: 'Create a cross-validation job to check for inconsistencies between documents in a shipment.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateDocumentsRequest'
+      responses:
+        '200':
+          description: Cross-validation job created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      jobId:
+                        type: string
+                      message:
+                        type: string
+        '400':
+          description: Invalid request
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/documents/merge:
+    post:
+      tags:
+      - Documents
+      summary: Merge shipment documents
+      description: 'Create a job to merge data from multiple documents within a shipment.
+
+        Intelligently combines data from related documents (e.g., commercial invoice and packing list).
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeDocumentsRequest'
+      responses:
+        '200':
+          description: Merge job created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/MergeJobResponse'
+        '400':
+          description: Invalid request or documents not found
+        '404':
+          description: Shipment not found
+  /api/v1/external/shipments/{shipmentId}/documents/analyze-types:
+    post:
+      tags:
+      - Documents
+      summary: Analyze document types
+      description: 'Analyze a document to detect multiple document types within it.
+
+        For PDFs, this will identify different document types and their page boundaries.
+
+        For other file types, it will identify the document type based on content.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The document file to analyze
+              required:
+              - file
+      responses:
+        '200':
+          description: Document analysis completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      types:
+                        type: array
+                        description: Array of detected document types and their boundaries
+                        items:
+                          type: object
+                          properties:
+                            documentType:
+                              type: string
+                              description: Type of document detected
+                              enum:
+                              - CommercialInvoice
+                              - PackingList
+                              - BillOfLading
+                              - AirWaybill
+                              - CertificateOfOrigin
+                              - DangerousGoodsDeclaration
+                              - Other
+                            startPage:
+                              type: integer
+                              nullable: true
+                              description: Starting page number (1-indexed) for PDFs
+                            endPage:
+                              type: integer
+                              nullable: true
+                              description: Ending page number (1-indexed) for PDFs
+                            confidence:
+                              type: string
+                              enum:
+                              - high
+                              - medium
+                              - low
+                              description: Confidence level of the detection
+                      totalPages:
+                        type: integer
+                        description: Total number of pages in the document (for PDFs)
+                      requiresSplit:
+                        type: boolean
+                        description: Whether the document contains multiple types requiring split
+        '400':
+          description: Invalid file or request
+        '404':
+          description: Shipment not found
+        '413':
+          description: File too large
+  /api/v1/external/shipments/{shipmentId}/documents/upload-multi:
+    post:
+      tags:
+      - Documents
+      summary: Upload multi-document file
+      description: 'Upload a file containing multiple documents.
+
+        For PDFs with multiple document types, this will create separate document records for each type.
+
+        The original file is stored once, with virtual splits created for each document type.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: shipmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique shipment identifier
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The document file to upload
+                types:
+                  type: string
+                  description: JSON string containing array of document types with page ranges
+                  example: '[{"documentType":"BillOfLading","startPage":1,"endPage":2},{"documentType":"CommercialInvoice","startPage":3,"endPage":4}]'
+              required:
+              - file
+              - types
+      responses:
+        '200':
+          description: Documents uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      documents:
+                        type: array
+                        description: Array of created document records
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: Document ID
+                            type:
+                              type: string
+                              description: Document type
+                            name:
+                              type: string
+                              description: Generated document name
+                            startPage:
+                              type: integer
+                              nullable: true
+                              description: Start page for split documents
+                            endPage:
+                              type: integer
+                              nullable: true
+                              description: End page for split documents
+                            isSplit:
+                              type: boolean
+                              description: Whether this is a split document
+        '400':
+          description: Invalid file or types specification
+        '404':
+          description: Shipment not found
+        '413':
+          description: File too large
+  /api/v1/external/entities/{entityType}/{entityId}/documents:
+    get:
+      tags:
+      - Documents
+      summary: List entity documents
+      description: 'Retrieve all documents associated with a specific entity.
+
+        Supports any entity type (shipment, rfq_shipment, etc.).
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: includeDeleted
+        in: query
+        schema:
+          type: boolean
+        description: Include deleted documents
+      - name: documentTypes
+        in: query
+        schema:
+          type: string
+        description: Comma-separated list of document types to filter
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+        description: Filter by document status
+      responses:
+        '200':
+          description: Documents retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+        '404':
+          description: Entity not found
+    post:
+      tags:
+      - Documents
+      summary: Upload document to entity
+      description: 'Upload a single document and attach it to an entity.
+
+        Document type can be auto-detected or explicitly specified.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Document file to upload
+                documentType:
+                  type: string
+                  description: Document type (optional, will be auto-detected if not provided)
+      responses:
+        '201':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Document'
+                  message:
+                    type: string
+        '400':
+          description: Invalid file or parameters
+        '404':
+          description: Entity not found
+  /api/v1/external/entities/{entityType}/{entityId}/documents/multi:
+    post:
+      tags:
+      - Documents
+      summary: Upload multi-document PDF
+      description: 'Upload a single PDF file containing multiple documents.
+
+        The system will automatically split and classify each document.
+
+        '
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+              - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Multi-document PDF file
+                types:
+                  type: array
+                  items:
+                    type: string
+                  description: Expected document types (helps with classification)
+      responses:
+        '201':
+          description: Documents uploaded and split successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      jobId:
+                        type: string
+                        description: Job ID for tracking processing status
+                      documents:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Document'
+                  message:
+                    type: string
+        '400':
+          description: Invalid file or parameters
+        '404':
+          description: Entity not found
+  /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}:
+    get:
+      tags:
+      - Documents
+      summary: Get document details
+      description: Retrieve detailed information about a specific document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      responses:
+        '200':
+          description: Document retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Document'
+        '404':
+          description: Document or entity not found
+    put:
+      tags:
+      - Documents
+      summary: Update document metadata
+      description: Update document type or other metadata.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documentType:
+                  type: string
+                  description: New document type
+      responses:
+        '200':
+          description: Document updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Document'
+                  message:
+                    type: string
+        '404':
+          description: Document or entity not found
+    delete:
+      tags:
+      - Documents
+      summary: Delete document
+      description: Delete a document from an entity.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      responses:
+        '204':
+          description: Document deleted successfully
+        '404':
+          description: Document or entity not found
+  /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/download:
+    get:
+      tags:
+      - Documents
+      summary: Download document
+      description: Download the original document file.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      responses:
+        '200':
+          description: Document file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document or entity not found
+  /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/preview:
+    get:
+      tags:
+      - Documents
+      summary: Get document preview URL
+      description: Get a presigned URL for previewing the document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      - name: purpose
+        in: query
+        schema:
+          type: string
+        description: Purpose of the preview (for tracking)
+      responses:
+        '200':
+          description: Preview URL generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        description: Presigned URL for document preview
+                      expiresAt:
+                        type: string
+                        format: date-time
+                        description: URL expiration time
+        '404':
+          description: Document or entity not found
+  /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/history:
+    get:
+      tags:
+      - Documents
+      summary: Get document history
+      description: Retrieve the processing history of a document.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: entityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - shipment
+          - rfq_shipment
+        description: Type of entity
+      - name: entityId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Entity ID
+      - name: documentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Document ID
+      responses:
+        '200':
+          description: Document history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DocumentHistoryEntry'
+        '404':
+          description: Document or entity not found
+  /api/v1/external/documents/guess-type:
+    post:
+      tags:
+      - Documents
+      summary: Guess document type
+      description: 'Intelligently guess the type of a document based on its filename and optionally its content.
+
+        Uses AI-powered detection to analyze filename patterns and file content for accurate type identification.
+
+
+        **File size limit**: 50MB when uploading file content
+
+
+        **Supported file types for content analysis**:
+
+        - Images (JPEG, PNG, etc.)
+
+        - PDFs
+
+        - Spreadsheets (Excel, CSV)
+
+        - Word documents (DOCX)
+
+        '
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+                  description: The name of the file to analyze
+                  example: Packing_List_ABC.xlsx
+                file:
+                  type: string
+                  format: binary
+                  description: Optional file content for more accurate type detection
+              required:
+              - fileName
+      responses:
+        '200':
+          description: Document type guessed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      documentType:
+                        type: string
+                        description: The detected document type
+                        enum:
+                        - CommercialInvoice
+                        - PackingList
+                        - BillOfLading
+                        - AirWaybill
+                        - CertificateOfOrigin
+                        - DangerousGoodsDeclaration
+                        - InsuranceCertificate
+                        - SafetyDataSheet
+                        - BookingConfirmation
+                        - APInvoice
+                        - ARInvoice
+                        - PaymentConfirmation
+                        - ISFFiling
+                        - Other
+                        example: CommercialInvoice
+                      confidence:
+                        type: string
+                        description: Confidence level of the detection
+                        enum:
+                        - high
+                        - low
+                        example: high
+                      fileName:
+                        type: string
+                        description: The analyzed filename
+                        example: Commercial_Invoice_123.pdf
+                      fileAnalyzed:
+                        type: boolean
+                        description: Whether file content was analyzed (in addition to filename)
+                        example: false
+              example:
+                success: true
+                data:
+                  documentType: CommercialInvoice
+                  confidence: high
+                  fileName: Commercial_Invoice_123.pdf
+                  fileAnalyzed: false
+        '400':
+          description: Bad request - missing required parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: BAD_REQUEST
+                  message: fileName is required
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error:
+                  code: FORBIDDEN
+                  message: 'Insufficient scope: documents:read required'
+components:
+  schemas:
+    MergeDocumentsRequest:
+      type: object
+      properties:
+        documentIds:
+          type: array
+          items:
+            type: string
+          minItems: 2
+      required:
+      - documentIds
+    ValidateDocumentsRequest:
+      type: object
+      properties:
+        documentIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+      - documentIds
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1013737064058920960'
+        entityId:
+          type: string
+          example: '1014810279825727490'
+        entityType:
+          type: string
+          example: shipment
+        type:
+          type: string
+          example: CommercialInvoice
+        name:
+          type: string
+          example: commercial_invoice.pdf
+        size:
+          type: integer
+          example: 1024000
+        checksum:
+          type: string
+          example: a1b2c3d4e5f6...
+        isSelected:
+          type: boolean
+          example: true
+        extractedData:
+          type: object
+          description: Extracted data from the document
+          additionalProperties: true
+        extractionStatus:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          example: completed
+        extractionError:
+          type: string
+          example: null
+        extractedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MergeJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: '1014851234567890123'
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          example: pending
+        documentIds:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+          example: Merge job created. Use the job ID to check status.
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+    DocumentHistoryEntry:
+      type: object
+      properties:
+        type:
+          type: string
+          example: edit
+        source:
+          type: string
+          example: manual
+        date:
+          type: string
+          format: date-time
+        changes:
+          type: object
+          additionalProperties: true
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint

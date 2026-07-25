@@ -1,0 +1,279 @@
+openapi: 3.1.0
+info:
+  title: Wove External Authentication Testing API
+  version: 1.0.0
+  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  contact:
+    name: Wove API Support
+    email: api-support@wove.com
+    url: https://docs.wove.com
+  license:
+    name: Proprietary
+    url: https://wove.com/terms
+servers:
+- url: https://api.wove.com
+  description: Production server
+- url: https://staging-api.wove.com
+  description: Staging server
+- url: http://localhost:4000
+  description: Development server
+security:
+- bearerAuth: []
+tags:
+- name: Testing
+  description: Test endpoints for API validation
+paths:
+  /api/v1/external/test/ping:
+    get:
+      tags:
+      - Testing
+      summary: Test API connectivity
+      description: 'Simple ping endpoint to test API connectivity and authentication.
+
+        Returns basic information about your authenticated session.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Ping successful
+          headers:
+            X-RateLimit-Limit-Minute:
+              schema:
+                type: integer
+              description: Requests per minute limit
+            X-RateLimit-Remaining-Minute:
+              schema:
+                type: integer
+              description: Remaining requests this minute
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              example:
+                success: true
+                data:
+                  message: pong
+                  customerId: '1'
+                  clientId: '1014844138697089024'
+                  timestamp: '2025-07-12T00:30:05.083Z'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/external/test/rate-limit-status:
+    get:
+      tags:
+      - Testing
+      summary: Get rate limit status
+      description: 'Check your current rate limit usage and remaining quota.
+
+        Useful for monitoring your API usage and planning requests.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Rate limit status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      limits:
+                        type: object
+                        properties:
+                          perMinute:
+                            type: integer
+                            example: 60
+                          perDay:
+                            type: integer
+                            example: 10000
+                      usage:
+                        type: object
+                        properties:
+                          minute:
+                            type: integer
+                            example: 5
+                          day:
+                            type: integer
+                            example: 150
+                      remaining:
+                        type: object
+                        properties:
+                          minute:
+                            type: integer
+                            example: 55
+                          day:
+                            type: integer
+                            example: 9850
+                      resetTimes:
+                        type: object
+                        properties:
+                          minute:
+                            type: string
+                            format: date-time
+                            example: '2025-07-12T00:32:00.000Z'
+                          day:
+                            type: string
+                            format: date-time
+                            example: '2025-07-13T00:00:00.000Z'
+  /api/v1/external/test/protected:
+    get:
+      tags:
+      - Testing
+      summary: Test protected endpoint
+      description: 'Test endpoint that requires authentication and specific scopes.
+
+        Use this to verify that your OAuth token has the correct permissions.
+
+        '
+      security:
+      - bearerAuth:
+        - shipments:read
+      responses:
+        '200':
+          description: Access granted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Access granted to protected endpoint
+                      customerId:
+                        type: string
+                        example: '1'
+                      scopes:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                        - shipments:read
+                        - documents:read
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v1/external/test/api-usage-status:
+    get:
+      tags:
+      - Testing
+      summary: Get API usage statistics
+      description: 'Get detailed API usage statistics for the current OAuth client.
+
+        Includes daily, monthly, and total usage metrics.
+
+        '
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: API usage statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      dailyUsage:
+                        type: integer
+                        example: 150
+                        description: Number of API calls made today
+                      monthlyUsage:
+                        type: integer
+                        example: 4523
+                        description: Number of API calls made this month
+                      totalUsage:
+                        type: integer
+                        example: 15234
+                        description: Total number of API calls made
+                      lastRequest:
+                        type: string
+                        format: date-time
+                        example: '2025-07-12T00:30:05.083Z'
+                        description: Timestamp of the last API request
+                      averageResponseTime:
+                        type: number
+                        example: 125.5
+                        description: Average response time in milliseconds
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        message:
+          type: string
+          description: Optional success message
+      required:
+      - success
+      - data
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth 2.0 Bearer token obtained from /auth/token endpoint
