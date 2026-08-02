@@ -1,0 +1,12 @@
+generated: '2026-07-21'
+method: searched
+probe: true
+source: https://trust.wove.com/
+url: https://trust.wove.com/
+certifications:
+- SOC 2
+evidence:
+- source: https://trust.wove.com/
+  keywords:
+  - soc 2
+  - trust center

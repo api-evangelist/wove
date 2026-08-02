@@ -1,0 +1,31 @@
+generated: '2026-07-21'
+method: searched
+source: https://wove.com/releases
+description: >-
+  Structured capture of Wove's public release notes ("Product updates,
+  improvements, and new capabilities"), published monthly at wove.com/releases
+  with entries back to October 2025. The page renders the most recent month
+  expanded; earlier months are collapsed on the page and are recorded here by
+  month only. The live page is the source of truth.
+docs: https://wove.com/releases
+versioning:
+  scheme: monthly release notes (product-level; API versioned separately at /api/v1)
+  detail: lifecycle/wove-lifecycle.yml
+entries:
+  - date: '2026-05'
+    latest: true
+    breaking: false
+    highlights:
+      - Canadian & Mexico Customs Support — customs classification and compliance workflows extended to Canadian and Mexican import requirements
+      - Notifications — real-time notifications system for key shipment events and workflow updates
+      - Organizations API — organization management exposed via API for programmatic org-level configuration
+      - Coload Shipments — support for coload (consolidated cargo) shipment types
+months_published:
+  - '2026-05'
+  - '2026-04'
+  - '2026-03'
+  - '2026-02'
+  - '2026-01'
+  - '2025-12'
+  - '2025-11'
+  - '2025-10'

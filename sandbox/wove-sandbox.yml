@@ -1,0 +1,38 @@
+generated: '2026-07-21'
+method: searched
+source: https://api.wove.com/api/docs/
+description: >-
+  Wove's published test surface, captured from the OpenAPI at
+  api.wove.com/api/docs. Wove ships a staging environment alongside production
+  and a dedicated Testing tag of endpoints for verifying connectivity,
+  authentication, rate-limit standing, and API usage, plus webhook test
+  delivery endpoints. OAuth credentials are provisioned by an account manager
+  (no self-serve sandbox keys); no magic test values or fixtures are published.
+environments:
+  - name: production
+    url: https://api.wove.com
+  - name: staging
+    url: https://staging-api.wove.com
+    notes: Staging server published in the OpenAPI servers[] list.
+credentials:
+  provisioning: OAuth clients are created by a Wove account manager; client_id examples use a wove_prod_ prefix.
+  modes: >-
+    No published test-key prefix; staging vs production separation is by host.
+test_endpoints:
+  - operation: GET /api/v1/external/test/ping
+    purpose: Unauthenticated connectivity check.
+  - operation: GET /api/v1/external/test/protected
+    purpose: Verify a bearer token authenticates correctly.
+  - operation: GET /api/v1/external/test/rate-limit-status
+    purpose: Inspect current per-minute/daily rate-limit standing.
+  - operation: GET /api/v1/external/test/api-usage-status
+    purpose: Inspect API usage counters for the calling client.
+webhook_testing:
+  - operation: POST /api/v1/external/webhooks/test
+    purpose: Send a test event to an arbitrary URL before registering it.
+  - operation: POST /api/v1/external/webhooks/{webhookId}/test
+    purpose: Trigger a webhook.test delivery to a registered endpoint.
+  - operation: GET /api/v1/external/webhooks/{webhookId}/deliveries
+    purpose: Inspect recent delivery attempts and outcomes.
+time_simulation: null
+fixtures: null

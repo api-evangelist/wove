@@ -1,0 +1,74 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/wove-external-api-openapi-original.yml
+docs: https://api.wove.com/api/docs/
+format: custom-envelope
+description: >-
+  Error catalog for the Wove External API, derived from the 4xx/5xx responses
+  in the published OpenAPI and the Error Codes section of its API description.
+  Errors do not use RFC 9457 application/problem+json; every error returns a
+  consistent JSON envelope with a machine-readable code.
+envelope:
+  shape: '{ "success": false, "error": { "code": "...", "message": "...", "details": { ... } } }'
+  schema: ErrorResponse
+error_codes:
+  - code: VALIDATION_ERROR
+    meaning: Invalid request parameters or data validation failure
+    http_status: 400
+  - code: AUTHENTICATION_ERROR
+    meaning: Invalid or expired credentials
+    http_status: 401
+  - code: AUTHORIZATION_ERROR
+    meaning: Insufficient permissions for the requested operation (missing OAuth scope)
+    http_status: 403
+  - code: NOT_FOUND
+    meaning: Requested resource not found
+    http_status: 404
+  - code: RATE_LIMIT_ERROR
+    meaning: Too many requests, rate limit exceeded
+    http_status: 429
+  - code: INTERNAL_ERROR
+    meaning: Internal server error
+    http_status: 500
+problems:
+  - status: 400
+    title: Bad request
+    detail: Invalid request body, missing required parameters, invalid file, or source not ready for processing.
+    source_operations:
+      - POST /api/v1/external/shipments/{shipmentId}/documents/validate
+      - POST /api/v1/external/sources/{sourceId}/process
+      - POST /api/v1/external/webhooks
+  - status: 401
+    title: Authentication required
+    detail: Missing bearer token, invalid client credentials, or invalid/expired access token.
+    source_operations:
+      - POST /api/v1/external/auth/token
+      - GET /api/v1/external/test/protected
+  - status: 403
+    title: Insufficient permissions
+    detail: The access token lacks the OAuth scope the operation requires (e.g. tariffs:read, sources:write, tms-organizations:write).
+    source_operations:
+      - GET /api/v1/external/tariffs/lookup
+      - POST /api/v1/external/sources/upload
+      - POST /api/v1/external/tms/organizations
+  - status: 404
+    title: Resource not found
+    detail: Shipment, document, source, item, or entity not found (or not accessible to the client).
+    source_operations:
+      - GET /api/v1/external/shipments/{shipmentId}
+      - GET /api/v1/external/sources/{sourceId}
+  - status: 413
+    title: File too large
+    detail: Uploaded document exceeds the maximum accepted file size.
+    source_operations:
+      - POST /api/v1/external/shipments/{shipmentId}/documents
+  - status: 429
+    title: Rate limit exceeded
+    detail: Per-minute (default 60) or daily (default 10,000) client rate limit exhausted; check X-RateLimit-* headers.
+    source_operations:
+      - documented globally in the API description (Rate Limiting section)
+  - status: 500
+    title: Internal server error
+    detail: Unexpected server-side failure; retry with backoff.
+    source_operations:
+      - documented globally in the API description (Error Codes section)

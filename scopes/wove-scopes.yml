@@ -1,0 +1,48 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/wove-external-api-openapi-original.yml
+description: >-
+  OAuth 2.0 scopes for the Wove External API, derived from the published
+  OpenAPI at api.wove.com/api/docs. The API uses the client_credentials grant
+  (POST /api/v1/external/auth/token) with an optional space-separated scope
+  parameter; the spec's securityScheme is declared as http bearer (JWT), with
+  the scope model expressed through the TokenRequest/TokenResponse schemas and
+  per-operation 403 "requires <scope> scope" responses. Scope names below are
+  exactly those named in the spec; Wove publishes no standalone scopes
+  reference page.
+schemes:
+  - name: bearerAuth
+    type: http (bearer JWT) issued via OAuth 2.0 client_credentials
+    source: openapi/wove-external-api-openapi-original.yml
+    flows:
+      - flow: clientCredentials
+        tokenUrl: https://api.wove.com/api/v1/external/auth/token
+        revocationUrl: https://api.wove.com/api/v1/external/auth/revoke
+scopes:
+  - scope: shipments:read
+    description: Read access to shipments (named in TokenRequest/TokenResponse scope examples).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: documents:read
+    description: Read access to documents (named in TokenRequest/TokenResponse scope examples).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: validation:create
+    description: Create document validation jobs (named in TokenRequest/TokenResponse scope examples).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: tariffs:read
+    description: Required for tariff lookup/search/batch-lookup operations (per-operation 403 responses).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: rates:read
+    description: Required for querying rates from query-bank sources (per-operation 403 response).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: sources:write
+    description: Required for uploading and processing rate/document sources (per-operation 403 response).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: tms-organizations:read
+    description: Read access to TMS organizations (per-operation 403 responses).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: tms-organizations:write
+    description: Create/update/import TMS organizations (per-operation 403 responses).
+    sources: [openapi/wove-external-api-openapi-original.yml]
+  - scope: tms-organizations:delete
+    description: Delete TMS organizations (per-operation 403 response).
+    sources: [openapi/wove-external-api-openapi-original.yml]

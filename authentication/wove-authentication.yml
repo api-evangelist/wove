@@ -1,0 +1,14 @@
+generated: '2026-07-21'
+method: derived
+source: openapi/wove-external-api-openapi-original.yml
+summary:
+  types:
+  - http
+schemes:
+- name: bearerAuth
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: OAuth 2.0 Bearer token obtained from /auth/token endpoint
+  sources:
+  - openapi/wove-external-api-openapi-original.yml

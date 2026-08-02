@@ -1,0 +1,40 @@
+{
+  "provider": "wove",
+  "sources": [
+    "wove-authentication-api-openapi.yml",
+    "wove-documents-api-openapi.yml",
+    "wove-query-bank-api-openapi.yml",
+    "wove-rates-api-openapi.yml",
+    "wove-shipments-api-openapi.yml",
+    "wove-sources-api-openapi.yml",
+    "wove-tariffs-api-openapi.yml",
+    "wove-testing-api-openapi.yml",
+    "wove-tms-organizations-api-openapi.yml",
+    "wove-webhooks-api-openapi.yml"
+  ],
+  "outputs": [
+    "wove-authentication-api-openapi.yml",
+    "wove-documents-api-openapi.yml",
+    "wove-query-bank-api-openapi.yml",
+    "wove-rates-api-openapi.yml",
+    "wove-shipments-api-openapi.yml",
+    "wove-sources-api-openapi.yml",
+    "wove-tariffs-api-openapi.yml",
+    "wove-testing-api-openapi.yml",
+    "wove-tms-organizations-api-openapi.yml",
+    "wove-webhooks-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/CreateTmsOrganizationRequest",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/NotFoundError",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/TmsOrganization",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/TmsOrganizationImportResponse",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/TmsOrganizationImportStatus",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/UnauthorizedError",
+    "wove-tms-organizations-api-openapi.yml: dangling $ref: #/components/schemas/UpdateTmsOrganizationRequest"
+  ],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}

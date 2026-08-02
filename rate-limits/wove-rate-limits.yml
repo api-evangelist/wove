@@ -1,0 +1,48 @@
+specification: API Commons Rate Limits
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+provider: Wove
+providerId: wove
+generated: '2026-07-21'
+method: searched
+created: '2026-07-21'
+modified: '2026-07-21'
+tags:
+  - Rate Limiting
+  - Logistics
+  - Trade Compliance
+description: >-
+  Rate limits for the Wove External API, documented in the published OpenAPI
+  description at api.wove.com/api/docs. Limits are configured per OAuth client;
+  the defaults below apply unless a higher limit is configured for the client.
+  Six X-RateLimit-* response headers signal both the per-minute and daily
+  windows, and a dedicated /test/rate-limit-status endpoint reports current
+  standing without consuming meaningful quota.
+sources:
+  - https://api.wove.com/api/docs/
+  - https://api.wove.com/api/docs/openapi.yaml
+headers:
+  limitMinute: X-RateLimit-Limit-Minute
+  remainingMinute: X-RateLimit-Remaining-Minute
+  resetMinute: X-RateLimit-Reset-Minute
+  limitDay: X-RateLimit-Limit-Day
+  remainingDay: X-RateLimit-Remaining-Day
+  resetDay: X-RateLimit-Reset-Day
+responseCodes:
+  throttled: 429
+introspection:
+  endpoint: GET /api/v1/external/test/rate-limit-status
+  note: Returns the calling client's current rate-limit standing.
+limits:
+  - name: Per-minute limit (default, per OAuth client)
+    scope: oauth-client
+    metric: requests_per_minute
+    limit: 60
+    timeFrame: minute
+    notes: Configurable per client; default 60 requests/minute.
+  - name: Daily limit (default, per OAuth client)
+    scope: oauth-client
+    metric: requests_per_day
+    limit: 10000
+    timeFrame: day
+    notes: Configurable per client; default 10,000 requests/day.

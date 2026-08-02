@@ -1,4 +1,17 @@
 aid: wove
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/wove.png
 name: Wove
 description: Wove is a company surfaced as a portfolio company of 500-global and added to the API Evangelist
   network as a stub for enrichment. This profile is a lead awaiting the enrichment pipeline.
@@ -14,12 +27,102 @@ created: '2026-07-17'
 modified: '2026-07-17'
 tags:
 - Company
-apis: []
+apis:
+- aid: wove:wove-authentication-api
+  name: Wove Authentication API
+  description: OAuth 2.0 authentication endpoints
+  tags:
+  - Authentication
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-authentication-api-openapi.yml
+- aid: wove:wove-documents-api
+  name: Wove Documents API
+  description: Document management within shipments
+  tags:
+  - Documents
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-documents-api-openapi.yml
+- aid: wove:wove-query-bank-api
+  name: Wove Query Bank API
+  description: Query Bank management - add/remove sources from your rate query pool
+  tags:
+  - Query Bank
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-query-bank-api-openapi.yml
+- aid: wove:wove-rates-api
+  name: Wove Rates API
+  description: Query freight rates from your Query Bank
+  tags:
+  - Rates
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-rates-api-openapi.yml
+- aid: wove:wove-shipments-api
+  name: Wove Shipments API
+  description: Shipment management operations
+  tags:
+  - Shipments
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-shipments-api-openapi.yml
+- aid: wove:wove-sources-api
+  name: Wove Sources API
+  description: Rate sheet source management - upload, process, and query status
+  tags:
+  - Sources
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-sources-api-openapi.yml
+- aid: wove:wove-tariffs-api
+  name: Wove Tariffs API
+  description: Duty and tariff rate lookup by HS code with customer-specific overrides
+  tags:
+  - Tariffs
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-tariffs-api-openapi.yml
+- aid: wove:wove-testing-api
+  name: Wove Testing API
+  description: Test endpoints for API validation
+  tags:
+  - Testing
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-testing-api-openapi.yml
+- aid: wove:wove-tms-organizations-api
+  name: Wove TMS Organizations API
+  description: TMS organization management - CRUD and bulk JSONL import
+  tags:
+  - TMS Organizations
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-tms-organizations-api-openapi.yml
+- aid: wove:wove-webhooks-api
+  name: Wove Webhooks API
+  description: Webhook management for async notifications
+  tags:
+  - Webhooks
+  properties:
+  - type: OpenAPI
+    url: openapi/wove-webhooks-api-openapi.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: AgenticAccess
+  url: agentic-access/wove-agentic-access.yml
+- type: TrustCenter
+  url: security/wove-trust-center.yml
+- type: VulnerabilityDisclosure
+  url: security/wove-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/wove-domain-security.yml
+- type: Authentication
+  url: authentication/wove-authentication.yml
 - type: Website
   url: https://wove.com

@@ -1,0 +1,33 @@
+generated: '2026-07-21'
+method: searched
+source: https://wove.com/releases
+description: >-
+  Lifecycle posture for the Wove External API. The API is versioned in the URI
+  path (/api/v1/external, spec version 1.0.0) with a staging server published
+  alongside production. Wove publishes monthly release notes at
+  wove.com/releases (back to October 2025) and a 99.9% uptime target with
+  documented RTO/RPO on its security page. No public status page, deprecation
+  policy, or Sunset/Deprecation header support was found.
+versioning:
+  scheme: uri-path
+  current: v1
+  spec_version: 1.0.0
+  path_prefix: /api/v1/external
+environments:
+  - name: production
+    url: https://api.wove.com
+  - name: staging
+    url: https://staging-api.wove.com
+release_notes: https://wove.com/releases
+changelog_detail: changelog/wove-changelog.yml
+sla:
+  uptime_target: '99.9%'
+  rto: '< 4 hours'
+  rpo: '< 1 hour'
+  source: https://wove.com/security
+status_page: null
+deprecation:
+  policy_url: null
+  sunset_header: false
+  notes: No deprecation policy or RFC 8594 Sunset header support documented.
+deprecated_operations: []

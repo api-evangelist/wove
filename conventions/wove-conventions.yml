@@ -1,0 +1,77 @@
+generated: '2026-07-21'
+method: searched
+source: >-
+  https://api.wove.com/api/docs/ — the cross-cutting request/response
+  conventions documented in the Wove External API OpenAPI description, plus
+  https://wove.com/developers.
+description: >-
+  How the Wove External API behaves across every operation: OAuth 2.0
+  client-credentials authentication with scoped JWT bearer tokens, page/limit
+  pagination with a standard envelope, a consistent success/error envelope,
+  six-header rate-limit signaling across two windows, and HMAC-SHA256-signed
+  webhooks. No idempotency-key mechanism is documented.
+
+base_url: https://api.wove.com
+api_style: REST over HTTPS, JSON requests and responses
+
+authentication:
+  scheme: OAuth 2.0 client_credentials -> JWT bearer token in Authorization header
+  token_url: https://api.wove.com/api/v1/external/auth/token
+  revocation_url: https://api.wove.com/api/v1/external/auth/revoke
+  token_lifetime_seconds: 3600
+  scopes: scopes/wove-scopes.yml
+  detail: authentication/wove-authentication.yml
+  docs: https://wove.com/developers
+
+idempotency:
+  supported: false
+  notes: >-
+    No Idempotency-Key header or equivalent replay-safety mechanism appears in
+    the OpenAPI or the developer documentation.
+
+pagination:
+  style: page-offset
+  request_params:
+    page: 1-based page number
+    limit: page size (example default 20)
+  response_fields:
+    envelope: pagination
+    fields: [page, limit, total, totalPages, hasNext, hasPrev]
+  source: PaginatedResponse schema in openapi/wove-external-api-openapi-original.yml
+
+response_envelope:
+  success: '{ "success": true, "data": ..., "message": "optional" }'
+  paginated: '{ "success": true, "data": [...], "pagination": {...} }'
+  error: '{ "success": false, "error": { "code", "message", "details" } }'
+  detail: errors/wove-problem-types.yml
+
+rate_limits:
+  signaling: >-
+    Six response headers across two windows: X-RateLimit-Limit-Minute,
+    X-RateLimit-Remaining-Minute, X-RateLimit-Reset-Minute,
+    X-RateLimit-Limit-Day, X-RateLimit-Remaining-Day, X-RateLimit-Reset-Day.
+  introspection: GET /api/v1/external/test/rate-limit-status
+  detail: rate-limits/wove-rate-limits.yml
+
+versioning:
+  scheme: uri-path
+  current: v1
+  path_prefix: /api/v1/external
+  detail: lifecycle/wove-lifecycle.yml
+
+webhooks:
+  signature_header: X-Wove-Signature
+  signature_algorithm: HMAC-SHA256 (hex digest of the raw JSON payload, verify with timing-safe compare)
+  event_header: X-Wove-Event
+  timestamp_header: X-Wove-Timestamp
+  detail: asyncapi/wove-webhooks.yml
+
+request_tracing:
+  supported: null
+  notes: No request-id / correlation-id response header is documented.
+
+field_expansion:
+  supported: false
+  notes: >-
+    No expand/sparse-fieldset mechanism; the API instead exposes a separate
+    /shipments/{shipmentId}/details resource for the fully-hydrated record.
