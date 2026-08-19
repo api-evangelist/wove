@@ -1,0 +1,768 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Shipments API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Shipments",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List shipments",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments",
+            "params": [
+              {
+                "name": "page",
+                "value": "",
+                "type": "query",
+                "description": "Page number for pagination"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of items per page"
+              },
+              {
+                "name": "status",
+                "value": "",
+                "type": "query",
+                "description": "Filter by shipment status"
+              },
+              {
+                "name": "shipmentType",
+                "value": "",
+                "type": "query",
+                "description": "Filter by shipment type"
+              },
+              {
+                "name": "search",
+                "value": "",
+                "type": "query",
+                "description": "Search shipments by name or ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve a paginated list of shipments for your organization.\nResults are ordered by creation date (newest first).\n"
+        },
+        {
+          "info": {
+            "name": "Create shipment",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Create a new shipment in draft status."
+        },
+        {
+          "info": {
+            "name": "Get shipment details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve detailed information about a specific shipment."
+        },
+        {
+          "info": {
+            "name": "Update shipment",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an existing shipment's details."
+        },
+        {
+          "info": {
+            "name": "Delete shipment",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Delete a shipment and all associated data."
+        },
+        {
+          "info": {
+            "name": "Get detailed shipment information",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/details",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve comprehensive shipment details including items and containers."
+        },
+        {
+          "info": {
+            "name": "Update shipment information",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/details",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update shipment-level details only. \nTo update containers, packages, or items, use the respective CRUD endpoints:\n- Containers: PUT /shipments/{shipmentId}/containers/{containerId}\n- Packages: PUT /shipments/{shipmentId}/packages/{packageId}\n- Items: PUT /shipments/{shipmentId}/items/{itemId}\n"
+        },
+        {
+          "info": {
+            "name": "Get shipment events",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/events",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve chronological events and milestones for a shipment."
+        },
+        {
+          "info": {
+            "name": "Get validation items",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/validation-items",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "status",
+                "value": "",
+                "type": "query",
+                "description": "Filter by validation item status"
+              },
+              {
+                "name": "actionStatus",
+                "value": "",
+                "type": "query",
+                "description": "Filter by validation item action status"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve all validation items for a shipment with optional filtering."
+        },
+        {
+          "info": {
+            "name": "Update validation item",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/validation-items/:itemId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "itemId",
+                "value": "",
+                "type": "path",
+                "description": "Unique validation item identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update the action status and details of a validation item."
+        },
+        {
+          "info": {
+            "name": "Bulk update validation items",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/validation-items/bulk-update",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update multiple validation items at once with the same action."
+        },
+        {
+          "info": {
+            "name": "Get shipment jobs",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/jobs",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve all background jobs (extraction, validation, merge) for a shipment."
+        },
+        {
+          "info": {
+            "name": "List containers",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/containers",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve all containers for a specific shipment."
+        },
+        {
+          "info": {
+            "name": "Create container",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/containers",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Add a new container to a shipment."
+        },
+        {
+          "info": {
+            "name": "Update container",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/containers/:containerId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "containerId",
+                "value": "",
+                "type": "path",
+                "description": "Unique container identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an existing container's details."
+        },
+        {
+          "info": {
+            "name": "Delete container",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/containers/:containerId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "containerId",
+                "value": "",
+                "type": "path",
+                "description": "Unique container identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Remove a container from a shipment. Associated packages will become loose packages."
+        },
+        {
+          "info": {
+            "name": "List packages",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/packages",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "containerId",
+                "value": "",
+                "type": "query",
+                "description": "Filter packages by container ID (use 'null' for loose packages)"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve all packages for a specific shipment, optionally filtered by container."
+        },
+        {
+          "info": {
+            "name": "Create package",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/packages",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Add a new package to a shipment (either in a container or as a loose package)."
+        },
+        {
+          "info": {
+            "name": "Update package",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/packages/:packageId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "packageId",
+                "value": "",
+                "type": "path",
+                "description": "Unique package identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an existing package's details."
+        },
+        {
+          "info": {
+            "name": "Delete package",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/packages/:packageId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "packageId",
+                "value": "",
+                "type": "path",
+                "description": "Unique package identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Remove a package from a shipment. Associated items will be deleted."
+        },
+        {
+          "info": {
+            "name": "Move package",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/packages/:packageId/move",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "packageId",
+                "value": "",
+                "type": "path",
+                "description": "Unique package identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Move a package to a different container or make it a loose package."
+        },
+        {
+          "info": {
+            "name": "List items",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/items",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "packageId",
+                "value": "",
+                "type": "query",
+                "description": "Filter items by package ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Retrieve all items for a specific shipment, optionally filtered by package."
+        },
+        {
+          "info": {
+            "name": "Create item",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/items",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Add a new item to a package."
+        },
+        {
+          "info": {
+            "name": "Update item",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/items/:itemId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "itemId",
+                "value": "",
+                "type": "path",
+                "description": "Unique item identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Update an existing item's details."
+        },
+        {
+          "info": {
+            "name": "Delete item",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/items/:itemId",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "itemId",
+                "value": "",
+                "type": "path",
+                "description": "Unique item identifier"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Remove an item from a package."
+        },
+        {
+          "info": {
+            "name": "Move item",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/shipments/:shipmentId/items/:itemId/move",
+            "params": [
+              {
+                "name": "shipmentId",
+                "value": "",
+                "type": "path",
+                "description": "Unique shipment identifier"
+              },
+              {
+                "name": "itemId",
+                "value": "",
+                "type": "path",
+                "description": "Unique item identifier"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Move an item to a different package."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

@@ -1,0 +1,130 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Sources API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Sources",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get presigned URL for source upload",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/sources/upload",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates a new source record and returns a presigned URL for uploading a rate sheet file.\n\n**Workflow**:\n1. Call this endpoint with file metadata\n2. Upload the file directly to the returned presigned URL using PUT\n3. Call POST /sources/{sourceId}/process to start processing\n\n**Supported file types**: Excel (.xlsx, .xls), CSV, PDF\n\n**File size limit**: 50MB\n"
+        },
+        {
+          "info": {
+            "name": "Start processing an uploaded source",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/sources/:sourceId/process",
+            "params": [
+              {
+                "name": "sourceId",
+                "value": "1234567890123456789",
+                "type": "path",
+                "description": "The source ID returned from the upload endpoint"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Initiates processing of a source file after it has been uploaded to the presigned URL.\n\nThe source will be queued for processing and its status will transition through:\n- `pending` → `processing` → `complete` or `failed`\n\nUse GET /sources/{sourceId} to monitor processing status.\nConfigure webhooks to receive notifications when processing completes.\n"
+        },
+        {
+          "info": {
+            "name": "List all sources",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/sources",
+            "params": [
+              {
+                "name": "status",
+                "value": "",
+                "type": "query",
+                "description": "Filter by processing status"
+              },
+              {
+                "name": "carrierId",
+                "value": "",
+                "type": "query",
+                "description": "Filter by carrier ID"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to return"
+              },
+              {
+                "name": "offset",
+                "value": "",
+                "type": "query",
+                "description": "Number of results to skip"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns a paginated list of all rate sheet sources for your organization.\n\nSources can be filtered by status and sorted by various fields.\n"
+        },
+        {
+          "info": {
+            "name": "Get source details",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/sources/:sourceId",
+            "params": [
+              {
+                "name": "sourceId",
+                "value": "1234567890123456789",
+                "type": "path",
+                "description": "The source ID"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns detailed information about a specific source, including processing status and any errors.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

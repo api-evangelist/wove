@@ -1,0 +1,321 @@
+{
+  "item": [
+    {
+      "id": "2930cf1e-e434-4af9-a59d-aea6c778e0dd",
+      "name": "Rates",
+      "description": {
+        "content": "Query freight rates from your Query Bank",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "61feaabb-fa02-48c5-aba4-4999367c5376",
+          "name": "Query freight rates",
+          "request": {
+            "name": "Query freight rates",
+            "description": {
+              "content": "Query freight rates from your Query Bank with flexible location and container filtering.\n\n**Location Filtering**:\n- Use `origins` and `destinations` for door-to-door moves (inland points)\n- Use `loadingPorts` and `dischargePorts` for port-to-port moves\n- Combine both for door-to-port or port-to-door queries\n- Region codes like USWC, USEC are supported for broader searches\n\n**Rate Structure**:\nEach rate includes:\n- Route information with all legs (pre-carriage, main, on-carriage)\n- Container rates with per-leg breakdown\n- Applicable surcharges with container-specific amounts\n\n**Pagination**:\nResults are paginated with a default limit of 100 rates per request.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "external",
+                "rates",
+                "query"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origins\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"destinations\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"loadingPorts\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"dischargePorts\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"effectiveDate\": \"<date>\",\n  \"expiryDate\": \"<date>\",\n  \"containerType\": \"<string>\",\n  \"containerSizes\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"carrierCodes\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"commodityType\": \"<string>\",\n  \"limit\": 100,\n  \"offset\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "55bfdf1a-33ba-4214-a9f3-2d621eb825c9",
+              "name": "Rates retrieved successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "rates",
+                    "query"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"loadingPorts\": [\n    \"CNSHA\",\n    \"CNNBO\"\n  ],\n  \"dischargePorts\": [\n    \"USLAX\",\n    \"USLGB\"\n  ],\n  \"containerType\": \"dry\",\n  \"containerSizes\": [\n    \"40ft\",\n    \"40ft_hc\"\n  ],\n  \"effectiveDate\": \"2024-01-15\",\n  \"limit\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"rates\": [\n      {\n        \"id\": \"rate_abc123\",\n        \"portOfLoading\": {\n          \"code\": \"CNSHA\",\n          \"name\": \"Shanghai\",\n          \"type\": \"port\"\n        },\n        \"portOfDischarge\": {\n          \"code\": \"USLAX\",\n          \"name\": \"Los Angeles\",\n          \"type\": \"port\"\n        },\n        \"carrierCode\": \"MAEU\",\n        \"carrierName\": \"Maersk\",\n        \"effectiveDate\": \"2024-01-01\",\n        \"expiryDate\": \"2024-03-31\",\n        \"transitTime\": 14,\n        \"legs\": [\n          {\n            \"type\": \"main\",\n            \"origin\": {\n              \"code\": \"CNSHA\",\n              \"name\": \"Shanghai\",\n              \"type\": \"port\"\n            },\n            \"destination\": {\n              \"code\": \"USLAX\",\n              \"name\": \"Los Angeles\",\n              \"type\": \"port\"\n            },\n            \"mode\": \"ocean\"\n          }\n        ],\n        \"containerRates\": [\n          {\n            \"containerType\": \"dry\",\n            \"containerSize\": \"40ft\",\n            \"amount\": 2500,\n            \"currency\": \"USD\"\n          },\n          {\n            \"containerType\": \"dry\",\n            \"containerSize\": \"40ft_hc\",\n            \"amount\": 2700,\n            \"currency\": \"USD\"\n          }\n        ],\n        \"surcharges\": [\n          {\n            \"code\": \"BAF\",\n            \"name\": \"Bunker Adjustment Factor\",\n            \"applicability\": \"subject_to\",\n            \"basis\": \"per_container\",\n            \"containerRates\": [\n              {\n                \"containerSize\": \"40ft\",\n                \"amount\": 150,\n                \"currency\": \"USD\"\n              },\n              {\n                \"containerSize\": \"40ft_hc\",\n                \"amount\": 150,\n                \"currency\": \"USD\"\n              }\n            ]\n          }\n        ],\n        \"sourceId\": \"1234567890123456789\",\n        \"sourceName\": \"carrier_rates_2024.xlsx\"\n      }\n    ],\n    \"metadata\": {\n      \"totalRates\": 1,\n      \"sourcesSearched\": 5,\n      \"queryTimeMs\": 45\n    }\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e09da236-b062-4c61-9b98-86318c0b2681",
+              "name": "Bad request - invalid query parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "rates",
+                    "query"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"loadingPorts\": [\n    \"CNSHA\",\n    \"CNNBO\"\n  ],\n  \"dischargePorts\": [\n    \"USLAX\",\n    \"USLGB\"\n  ],\n  \"containerType\": \"dry\",\n  \"containerSizes\": [\n    \"40ft\",\n    \"40ft_hc\"\n  ],\n  \"effectiveDate\": \"2024-01-15\",\n  \"limit\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "4f4ccf1f-63d9-4f9d-b4f6-258ac00c44b7",
+              "name": "Authentication required",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "rates",
+                    "query"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"loadingPorts\": [\n    \"CNSHA\",\n    \"CNNBO\"\n  ],\n  \"dischargePorts\": [\n    \"USLAX\",\n    \"USLGB\"\n  ],\n  \"containerType\": \"dry\",\n  \"containerSizes\": [\n    \"40ft\",\n    \"40ft_hc\"\n  ],\n  \"effectiveDate\": \"2024-01-15\",\n  \"limit\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "8f4fa678-f929-41a3-a3b3-1fa8741d43e5",
+              "name": "Insufficient permissions - requires rates:read scope",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "rates",
+                    "query"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"loadingPorts\": [\n    \"CNSHA\",\n    \"CNNBO\"\n  ],\n  \"dischargePorts\": [\n    \"USLAX\",\n    \"USLGB\"\n  ],\n  \"containerType\": \"dry\",\n  \"containerSizes\": [\n    \"40ft\",\n    \"40ft_hc\"\n  ],\n  \"effectiveDate\": \"2024-01-15\",\n  \"limit\": 50\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.wove.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "d33439ef-40d8-4489-af64-6e1419244884",
+    "name": "Wove External Authentication Rates API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n\n\nContact Support:\n Name: Wove API Support\n Email: api-support@wove.com",
+      "type": "text/plain"
+    }
+  }
+}

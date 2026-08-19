@@ -1,0 +1,58 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Authentication",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Get OAuth access token",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/auth/token",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Obtain an access token using OAuth 2.0 client credentials flow.\nThis token is required for all other API endpoints.\n\n**Rate Limiting**: 100 requests per minute per IP address.\n"
+        },
+        {
+          "info": {
+            "name": "Revoke OAuth token",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/auth/revoke",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Revoke an OAuth access token to immediately invalidate it.\nThis is useful when a token is compromised or no longer needed.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

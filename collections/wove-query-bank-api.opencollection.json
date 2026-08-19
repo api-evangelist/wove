@@ -1,0 +1,81 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Query Bank API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Query Bank",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List Query Bank sources",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/query-bank/sources",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Returns all sources currently linked to your Query Bank.\n\nThe Query Bank is a collection of rate sources used when querying for rates.\nOnly sources with status \"complete\" can be added to the Query Bank.\n"
+        },
+        {
+          "info": {
+            "name": "Add source to Query Bank",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/query-bank/sources",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Links a processed source to your Query Bank, making its rates available for querying.\n\n**Requirements**:\n- Source must exist and belong to your organization\n- Source must have status \"complete\"\n- Source cannot already be in the Query Bank\n"
+        },
+        {
+          "info": {
+            "name": "Remove source from Query Bank",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.wove.com/api/v1/external/query-bank/sources/:sourceId",
+            "params": [
+              {
+                "name": "sourceId",
+                "value": "1234567890123456789",
+                "type": "path",
+                "description": "The source ID to remove from Query Bank"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Unlinks a source from your Query Bank. The source will no longer be included in rate queries.\n\nThis does not delete the source itself - it only removes it from the Query Bank.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

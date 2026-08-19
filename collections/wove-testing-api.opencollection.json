@@ -1,0 +1,84 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Testing API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Testing",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Test API connectivity",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/test/ping",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Simple ping endpoint to test API connectivity and authentication.\nReturns basic information about your authenticated session.\n"
+        },
+        {
+          "info": {
+            "name": "Get rate limit status",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/test/rate-limit-status",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Check your current rate limit usage and remaining quota.\nUseful for monitoring your API usage and planning requests.\n"
+        },
+        {
+          "info": {
+            "name": "Test protected endpoint",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/test/protected",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Test endpoint that requires authentication and specific scopes.\nUse this to verify that your OAuth token has the correct permissions.\n"
+        },
+        {
+          "info": {
+            "name": "Get API usage statistics",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/test/api-usage-status",
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Get detailed API usage statistics for the current OAuth client.\nIncludes daily, monthly, and total usage metrics.\n"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

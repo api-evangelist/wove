@@ -1,0 +1,185 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Tariffs API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Tariffs",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Look up duty rates by HS code",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/tariffs/lookup",
+            "params": [
+              {
+                "name": "hsCode",
+                "value": "8471609050",
+                "type": "query",
+                "description": "HS/HTS code to look up (e.g., \"6209205000\" or \"6209.20.50.00\")"
+              },
+              {
+                "name": "originCountry",
+                "value": "CN",
+                "type": "query",
+                "description": "Origin country code (2-letter ISO)"
+              },
+              {
+                "name": "destinationCountry",
+                "value": "US",
+                "type": "query",
+                "description": "Destination country code (2-letter ISO)"
+              },
+              {
+                "name": "customsValue",
+                "value": "10000",
+                "type": "query",
+                "description": "Customs value for duty calculation"
+              },
+              {
+                "name": "currency",
+                "value": "USD",
+                "type": "query",
+                "description": "Currency code for calculations"
+              },
+              {
+                "name": "entryDate",
+                "value": "2024-01-15",
+                "type": "query",
+                "description": "Entry date for historical rate lookup (ISO date)"
+              },
+              {
+                "name": "dateOfLoading",
+                "value": "",
+                "type": "query",
+                "description": "Date of loading for historical rate lookup (used if entryDate not provided)"
+              },
+              {
+                "name": "transportMode",
+                "value": "",
+                "type": "query",
+                "description": "Transport mode for customs fee calculations"
+              },
+              {
+                "name": "componentValues",
+                "value": "{\"aluminum\": 30}",
+                "type": "query",
+                "description": "JSON object of component values for Section 232 calculations (e.g., '{\"aluminum\": 30}' for 30% aluminum content)\n"
+              },
+              {
+                "name": "exclusionCodes",
+                "value": "[\"9903.01.21\"]",
+                "type": "query",
+                "description": "JSON array of Chapter 99 exclusion codes to apply (e.g., '[\"9903.01.21\"]')"
+              },
+              {
+                "name": "includeFtaOptions",
+                "value": "",
+                "type": "query",
+                "description": "Whether to include FTA options in the response"
+              },
+              {
+                "name": "applyFtaProgram",
+                "value": "US_AU_FTA",
+                "type": "query",
+                "description": "FTA program code to apply (e.g., 'US_AU_FTA')"
+              },
+              {
+                "name": "weightKg",
+                "value": "",
+                "type": "query",
+                "description": "Weight in kilograms for per-kg fee calculations"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Look up import duty rates for a specific HS/HTS code.\n\n**Features**:\n- Supports US, EU, Canada, and Australia tariff schedules\n- Returns MFN rates, preferential rates, and additional duties (Section 301, 232, etc.)\n- Calculates landed cost including customs fees\n- Supports FTA program selection\n- Customer-specific tariff overrides are automatically applied\n\n**HS Code Format**:\n- US: 10-digit HTS code (e.g., \"6209205000\" or \"6209.20.50.00\")\n- Other countries: 4-12 digit HS code\n\n**Additional Duti"
+        },
+        {
+          "info": {
+            "name": "Search tariffs by product description",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.wove.com/api/v1/external/tariffs/search",
+            "params": [
+              {
+                "name": "q",
+                "value": "laptop computer",
+                "type": "query",
+                "description": "Product description to search for"
+              },
+              {
+                "name": "country",
+                "value": "US",
+                "type": "query",
+                "description": "Destination country code (2-letter ISO)"
+              },
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query",
+                "description": "Maximum number of results (max 50)"
+              },
+              {
+                "name": "entryDate",
+                "value": "",
+                "type": "query",
+                "description": "Entry date for historical rate lookup (ISO date)"
+              },
+              {
+                "name": "dateOfLoading",
+                "value": "",
+                "type": "query",
+                "description": "Date of loading for historical rate lookup"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Search for tariff lines using semantic search on product descriptions.\n\nThis endpoint uses AI-powered semantic search to find relevant HS codes\nbased on natural language product descriptions. Results are ranked by\nrelevance to the search query.\n\n**Note**: This endpoint excludes Chapter 99 codes (9903.xx.xx) as they\nare administrative tariff codes, not product classifications.\n"
+        },
+        {
+          "info": {
+            "name": "Batch look up duty rates for multiple HS codes, origins, destinations, or entry dates",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/tariffs/batch-lookup",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Look up import duty rates for a batch of items in a single request.\n\nEach item is a self-contained query carrying its own `hsCode`, `originCountry`,\n`destinationCountry`, and (optionally) `entryDate`, so callers can mix and match\nany combination of dimensions in a single request.\n\n**Behaviour**:\n- Items are processed independently; a failure on one item does not abort the batch.\n- Results are returned in request order and matched to each item by the caller-provided `id`.\n- Each item counts towar"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

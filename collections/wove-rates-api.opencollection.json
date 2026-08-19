@@ -1,0 +1,43 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Wove External Authentication Rates API",
+    "version": "1.0.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Rates",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Query freight rates",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.wove.com/api/v1/external/rates/query",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Query freight rates from your Query Bank with flexible location and container filtering.\n\n**Location Filtering**:\n- Use `origins` and `destinations` for door-to-door moves (inland points)\n- Use `loadingPorts` and `dischargePorts` for port-to-port moves\n- Combine both for door-to-port or port-to-door queries\n- Region codes like USWC, USEC are supported for broader searches\n\n**Rate Structure**:\nEach rate includes:\n- Route information with all legs (pre-carriage, main, on-carriage)\n- Container rate"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

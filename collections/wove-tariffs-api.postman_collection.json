@@ -1,0 +1,1297 @@
+{
+  "item": [
+    {
+      "id": "3b44da54-6990-4888-aa2b-b1f87bf0bd83",
+      "name": "Tariffs",
+      "description": {
+        "content": "Duty and tariff rate lookup by HS code with customer-specific overrides",
+        "type": "text/plain"
+      },
+      "item": [
+        {
+          "id": "efe8d8cb-b876-47a7-aa27-31da4abed5a7",
+          "name": "Look up duty rates by HS code",
+          "request": {
+            "name": "Look up duty rates by HS code",
+            "description": {
+              "content": "Look up import duty rates for a specific HS/HTS code.\n\n**Features**:\n- Supports US, EU, Canada, and Australia tariff schedules\n- Returns MFN rates, preferential rates, and additional duties (Section 301, 232, etc.)\n- Calculates landed cost including customs fees\n- Supports FTA program selection\n- Customer-specific tariff overrides are automatically applied\n\n**HS Code Format**:\n- US: 10-digit HTS code (e.g., \"6209205000\" or \"6209.20.50.00\")\n- Other countries: 4-12 digit HS code\n\n**Additional Duties**:\nFor products subject to Section 232 tariffs (steel/aluminum derivatives),\nyou may need to provide component percentages via `componentValues`.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "external",
+                "tariffs",
+                "lookup"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "hsCode",
+                  "value": "<string>",
+                  "description": "(Required) HS/HTS code to look up (e.g., \"6209205000\" or \"6209.20.50.00\")"
+                },
+                {
+                  "disabled": false,
+                  "key": "originCountry",
+                  "value": "<string>",
+                  "description": "(Required) Origin country code (2-letter ISO)"
+                },
+                {
+                  "disabled": false,
+                  "key": "destinationCountry",
+                  "value": "<string>",
+                  "description": "(Required) Destination country code (2-letter ISO)"
+                },
+                {
+                  "disabled": false,
+                  "key": "customsValue",
+                  "value": "<number>",
+                  "description": "Customs value for duty calculation"
+                },
+                {
+                  "disabled": false,
+                  "key": "currency",
+                  "value": "USD",
+                  "description": "Currency code for calculations"
+                },
+                {
+                  "disabled": false,
+                  "key": "entryDate",
+                  "value": "<date>",
+                  "description": "Entry date for historical rate lookup (ISO date)"
+                },
+                {
+                  "disabled": false,
+                  "key": "dateOfLoading",
+                  "value": "<date>",
+                  "description": "Date of loading for historical rate lookup (used if entryDate not provided)"
+                },
+                {
+                  "disabled": false,
+                  "key": "transportMode",
+                  "value": "ocean",
+                  "description": "Transport mode for customs fee calculations"
+                },
+                {
+                  "disabled": false,
+                  "key": "componentValues",
+                  "value": "<string>",
+                  "description": "JSON object of component values for Section 232 calculations (e.g., '{\"aluminum\": 30}' for 30% aluminum content)\n"
+                },
+                {
+                  "disabled": false,
+                  "key": "exclusionCodes",
+                  "value": "<string>",
+                  "description": "JSON array of Chapter 99 exclusion codes to apply (e.g., '[\"9903.01.21\"]')"
+                },
+                {
+                  "disabled": false,
+                  "key": "includeFtaOptions",
+                  "value": "<string>",
+                  "description": "Whether to include FTA options in the response"
+                },
+                {
+                  "disabled": false,
+                  "key": "applyFtaProgram",
+                  "value": "<string>",
+                  "description": "FTA program code to apply (e.g., 'US_AU_FTA')"
+                },
+                {
+                  "disabled": false,
+                  "key": "weightKg",
+                  "value": "<number>",
+                  "description": "Weight in kilograms for per-kg fee calculations"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "e6044a37-dae1-4b80-997d-933e145172d9",
+              "name": "Tariff lookup successful",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hsCode",
+                      "value": "8471609050"
+                    },
+                    {
+                      "key": "originCountry",
+                      "value": "CN"
+                    },
+                    {
+                      "key": "destinationCountry",
+                      "value": "US"
+                    },
+                    {
+                      "key": "customsValue",
+                      "value": "10000"
+                    },
+                    {
+                      "key": "currency",
+                      "value": "USD"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "2024-01-15"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "transportMode",
+                      "value": "ocean"
+                    },
+                    {
+                      "key": "componentValues",
+                      "value": "{\"aluminum\": 30}"
+                    },
+                    {
+                      "key": "exclusionCodes",
+                      "value": "[\"9903.01.21\"]"
+                    },
+                    {
+                      "key": "includeFtaOptions",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "applyFtaProgram",
+                      "value": "US_AU_FTA"
+                    },
+                    {
+                      "key": "weightKg",
+                      "value": "<number>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"tariffLine\": {\n      \"id\": \"12345\",\n      \"code\": \"8471.60.90.50\",\n      \"description\": \"Other data processing equipment\",\n      \"hs6\": \"847160\",\n      \"uomPrimary\": \"NO\"\n    },\n    \"applicableRate\": {\n      \"regime\": \"MFN\",\n      \"programCode\": \"US_MFN\",\n      \"rateType\": \"AD_VALOREM\",\n      \"adValoremRate\": 0,\n      \"formulaDescription\": \"Free\"\n    },\n    \"mfnRate\": 0,\n    \"additionalDuties\": []\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "aebc54c6-bf7d-4bd9-a173-938afdedd4f0",
+              "name": "Bad request - invalid parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hsCode",
+                      "value": "8471609050"
+                    },
+                    {
+                      "key": "originCountry",
+                      "value": "CN"
+                    },
+                    {
+                      "key": "destinationCountry",
+                      "value": "US"
+                    },
+                    {
+                      "key": "customsValue",
+                      "value": "10000"
+                    },
+                    {
+                      "key": "currency",
+                      "value": "USD"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "2024-01-15"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "transportMode",
+                      "value": "ocean"
+                    },
+                    {
+                      "key": "componentValues",
+                      "value": "{\"aluminum\": 30}"
+                    },
+                    {
+                      "key": "exclusionCodes",
+                      "value": "[\"9903.01.21\"]"
+                    },
+                    {
+                      "key": "includeFtaOptions",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "applyFtaProgram",
+                      "value": "US_AU_FTA"
+                    },
+                    {
+                      "key": "weightKg",
+                      "value": "<number>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Query parameter \\\"hsCode\\\" is required\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "fe8d84a3-91f2-4316-a3c9-1f77da35cf6c",
+              "name": "Authentication required",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hsCode",
+                      "value": "8471609050"
+                    },
+                    {
+                      "key": "originCountry",
+                      "value": "CN"
+                    },
+                    {
+                      "key": "destinationCountry",
+                      "value": "US"
+                    },
+                    {
+                      "key": "customsValue",
+                      "value": "10000"
+                    },
+                    {
+                      "key": "currency",
+                      "value": "USD"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "2024-01-15"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "transportMode",
+                      "value": "ocean"
+                    },
+                    {
+                      "key": "componentValues",
+                      "value": "{\"aluminum\": 30}"
+                    },
+                    {
+                      "key": "exclusionCodes",
+                      "value": "[\"9903.01.21\"]"
+                    },
+                    {
+                      "key": "includeFtaOptions",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "applyFtaProgram",
+                      "value": "US_AU_FTA"
+                    },
+                    {
+                      "key": "weightKg",
+                      "value": "<number>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "91f48d47-c0e9-4ec1-90be-bf4909d280e9",
+              "name": "Insufficient permissions - requires tariffs:read scope",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hsCode",
+                      "value": "8471609050"
+                    },
+                    {
+                      "key": "originCountry",
+                      "value": "CN"
+                    },
+                    {
+                      "key": "destinationCountry",
+                      "value": "US"
+                    },
+                    {
+                      "key": "customsValue",
+                      "value": "10000"
+                    },
+                    {
+                      "key": "currency",
+                      "value": "USD"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "2024-01-15"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "transportMode",
+                      "value": "ocean"
+                    },
+                    {
+                      "key": "componentValues",
+                      "value": "{\"aluminum\": 30}"
+                    },
+                    {
+                      "key": "exclusionCodes",
+                      "value": "[\"9903.01.21\"]"
+                    },
+                    {
+                      "key": "includeFtaOptions",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "applyFtaProgram",
+                      "value": "US_AU_FTA"
+                    },
+                    {
+                      "key": "weightKg",
+                      "value": "<number>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "887435b7-08fb-467e-9cd3-fa527b04eccf",
+              "name": "Tariff line not found",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "hsCode",
+                      "value": "8471609050"
+                    },
+                    {
+                      "key": "originCountry",
+                      "value": "CN"
+                    },
+                    {
+                      "key": "destinationCountry",
+                      "value": "US"
+                    },
+                    {
+                      "key": "customsValue",
+                      "value": "10000"
+                    },
+                    {
+                      "key": "currency",
+                      "value": "USD"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "2024-01-15"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "transportMode",
+                      "value": "ocean"
+                    },
+                    {
+                      "key": "componentValues",
+                      "value": "{\"aluminum\": 30}"
+                    },
+                    {
+                      "key": "exclusionCodes",
+                      "value": "[\"9903.01.21\"]"
+                    },
+                    {
+                      "key": "includeFtaOptions",
+                      "value": "<string>"
+                    },
+                    {
+                      "key": "applyFtaProgram",
+                      "value": "US_AU_FTA"
+                    },
+                    {
+                      "key": "weightKg",
+                      "value": "<number>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"NOT_FOUND\",\n    \"message\": \"No tariff line found for HS code 1234567890\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "2ee121a5-7157-4dbc-8923-8c7d82b3a5ec",
+          "name": "Search tariffs by product description",
+          "request": {
+            "name": "Search tariffs by product description",
+            "description": {
+              "content": "Search for tariff lines using semantic search on product descriptions.\n\nThis endpoint uses AI-powered semantic search to find relevant HS codes\nbased on natural language product descriptions. Results are ranked by\nrelevance to the search query.\n\n**Note**: This endpoint excludes Chapter 99 codes (9903.xx.xx) as they\nare administrative tariff codes, not product classifications.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "external",
+                "tariffs",
+                "search"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [
+                {
+                  "disabled": false,
+                  "key": "q",
+                  "value": "<string>",
+                  "description": "(Required) Product description to search for"
+                },
+                {
+                  "disabled": false,
+                  "key": "country",
+                  "value": "<string>",
+                  "description": "(Required) Destination country code (2-letter ISO)"
+                },
+                {
+                  "disabled": false,
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum number of results (max 50)"
+                },
+                {
+                  "disabled": false,
+                  "key": "entryDate",
+                  "value": "<date>",
+                  "description": "Entry date for historical rate lookup (ISO date)"
+                },
+                {
+                  "disabled": false,
+                  "key": "dateOfLoading",
+                  "value": "<date>",
+                  "description": "Date of loading for historical rate lookup"
+                }
+              ],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "815684f2-9c43-4b4c-86de-bece955025bd",
+              "name": "Search results retrieved successfully",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "search"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "laptop computer"
+                    },
+                    {
+                      "key": "country",
+                      "value": "US"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"results\": [\n      {\n        \"id\": \"12345\",\n        \"code\": \"8471.30.01.00\",\n        \"description\": \"Portable automatic data processing machines, weighing not more than 10 kg\",\n        \"similarity\": 0.92\n      },\n      {\n        \"id\": \"12346\",\n        \"code\": \"8471.41.01.00\",\n        \"description\": \"Other automatic data processing machines comprising in the same housing at least a CPU and an input and output unit\",\n        \"similarity\": 0.85\n      }\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "e936ea7c-6338-454c-b921-78e1ef9d7d2e",
+              "name": "Bad request - invalid parameters",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "search"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "laptop computer"
+                    },
+                    {
+                      "key": "country",
+                      "value": "US"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "993ff11b-5188-415d-a8b1-f7af51acf8dc",
+              "name": "Authentication required",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "search"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "laptop computer"
+                    },
+                    {
+                      "key": "country",
+                      "value": "US"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "6d99e371-24a6-42c9-995c-9a205ff657e9",
+              "name": "Insufficient permissions - requires tariffs:read scope",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "search"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "laptop computer"
+                    },
+                    {
+                      "key": "country",
+                      "value": "US"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "entryDate",
+                      "value": "<date>"
+                    },
+                    {
+                      "key": "dateOfLoading",
+                      "value": "<date>"
+                    }
+                  ],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "3c52677a-9e76-4262-8f8c-9125c9a5b991",
+          "name": "Batch look up duty rates for multiple HS codes, origins, destinations, or entry dates",
+          "request": {
+            "name": "Batch look up duty rates for multiple HS codes, origins, destinations, or entry dates",
+            "description": {
+              "content": "Look up import duty rates for a batch of items in a single request.\n\nEach item is a self-contained query carrying its own `hsCode`, `originCountry`,\n`destinationCountry`, and (optionally) `entryDate`, so callers can mix and match\nany combination of dimensions in a single request.\n\n**Behaviour**:\n- Items are processed independently; a failure on one item does not abort the batch.\n- Results are returned in request order and matched to each item by the caller-provided `id`.\n- Each item counts toward OAuth rate limits as one request.\n\n**Limits**:\n- Maximum 100 items per request.\n- Item `id` values must be unique within a request.\n\nFor per-item parameter semantics (HS code format, country codes, FTA programs,\ncomponent values, exclusion codes, etc.) see `POST /api/v1/external/tariffs/lookup`.\n",
+              "type": "text/plain"
+            },
+            "url": {
+              "path": [
+                "api",
+                "v1",
+                "external",
+                "tariffs",
+                "batch-lookup"
+              ],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{bearerToken}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"id\": \"<string>\",\n      \"hsCode\": \"<string>\",\n      \"originCountry\": \"<string>\",\n      \"destinationCountry\": \"<string>\",\n      \"customsValue\": \"<number>\",\n      \"currency\": \"USD\",\n      \"entryDate\": \"<date>\",\n      \"dateOfLoading\": \"<date>\",\n      \"transportMode\": \"ocean\",\n      \"componentValues\": {\n        \"key_0\": \"<number>\",\n        \"key_1\": \"<number>\"\n      },\n      \"exclusionCodes\": [\n        \"<string>\",\n        \"<string>\"\n      ],\n      \"includeFtaOptions\": \"<boolean>\",\n      \"applyFtaProgram\": \"<string>\",\n      \"weightKg\": \"<number>\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "id": "263dd0ac-9f97-4cbf-96a7-fa80a9ee7f64",
+              "name": "Batch lookup processed. Per-item status is reported via the `success` flag on each result.",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "batch-lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"cn\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"CN\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"mx\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"MX\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"de\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"DE\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"results\": [\n      {\n        \"id\": \"cn\",\n        \"success\": true,\n        \"data\": {\n          \"tariffLine\": {\n            \"code\": \"8471.60.90.50\",\n            \"description\": \"Other data processing equipment\"\n          },\n          \"applicableRate\": {\n            \"regime\": \"MFN\",\n            \"adValoremRate\": 0\n          },\n          \"additionalDuties\": []\n        }\n      },\n      {\n        \"id\": \"mx\",\n        \"success\": false,\n        \"error\": \"No tariff line found for HS code 8471609050\",\n        \"status\": 404\n      }\n    ]\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "72c84a6e-628c-4f64-babc-bc387783693f",
+              "name": "Bad request - request body invalid, items array empty, too many items, or duplicate ids",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "batch-lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"cn\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"CN\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"mx\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"MX\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"de\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"DE\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"\\\"items\\\" array must not be empty\"\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b0f94d10-2a07-4ad4-9e6f-c28bed3d4170",
+              "name": "Authentication required",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "batch-lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"cn\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"CN\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"mx\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"MX\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"de\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"DE\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "10a747f9-e1db-41d0-8329-02babc1371fe",
+              "name": "Insufficient permissions - requires tariffs:read scope",
+              "originalRequest": {
+                "url": {
+                  "path": [
+                    "api",
+                    "v1",
+                    "external",
+                    "tariffs",
+                    "batch-lookup"
+                  ],
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "description": {
+                      "content": "Added as a part of security scheme: bearer",
+                      "type": "text/plain"
+                    },
+                    "key": "Authorization",
+                    "value": "Bearer <token>"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"items\": [\n    {\n      \"id\": \"cn\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"CN\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"mx\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"MX\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    },\n    {\n      \"id\": \"de\",\n      \"hsCode\": \"8471609050\",\n      \"originCountry\": \"DE\",\n      \"destinationCountry\": \"US\",\n      \"customsValue\": 10000\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Invalid input parameters\",\n    \"details\": {}\n  }\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ],
+      "event": []
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.wove.com",
+      "key": "baseUrl"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "info": {
+    "_postman_id": "c9eaed36-fd38-47c9-8e95-f643a041dd19",
+    "name": "Wove External Authentication Tariffs API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n\n\nContact Support:\n Name: Wove API Support\n Email: api-support@wove.com",
+      "type": "text/plain"
+    }
+  }
+}
