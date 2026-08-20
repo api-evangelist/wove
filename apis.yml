@@ -104,6 +104,8 @@ apis:
   name: Wove Webhooks API
   description: Webhook management for async notifications
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
