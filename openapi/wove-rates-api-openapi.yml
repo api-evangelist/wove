@@ -1,8 +1,11 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Wove External Authentication Rates API
+  title: Wove External Rates API
   version: 1.0.0
-  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  description: '# Wove External API Documentation
+
+
+    The Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.'
   contact:
     name: Wove API Support
     email: api-support@wove.com
@@ -55,9 +58,7 @@ paths:
 
         **Pagination**:
 
-        Results are paginated with a default limit of 100 rates per request.
-
-        '
+        Results are paginated with a default limit of 100 rates per request.'
       security:
       - bearerAuth: []
       requestBody:
@@ -188,8 +189,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+      operationId: postApiV1ExternalRatesQuery
+      x-operation-id-source: derived
 components:
   schemas:
+    RateSurcharge:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Surcharge code (e.g., BAF, CAF, THC)
+          example: BAF
+        name:
+          type: string
+          description: Surcharge display name
+          example: Bunker Adjustment Factor
+        applicability:
+          type: string
+          enum:
+          - inclusive
+          - subject_to
+          - not_subject_to
+          - not_applicable
+          description: Whether this surcharge is included in base rate or additional
+        basis:
+          type: string
+          description: Charging basis (e.g., per_container, per_bl, percentage)
+          example: per_container
+        amount:
+          type: number
+          description: Default surcharge amount (when not container-specific)
+        currency:
+          type: string
+          example: USD
+        containerRates:
+          description: Container-specific surcharge amounts
+          type: array
+          items:
+            $ref: '#/components/schemas/SurchargeContainerRate'
+        percentage:
+          type: number
+          description: Percentage-based surcharge (if applicable)
+        applicablePorts:
+          type: array
+          items:
+            type: string
+          description: Specific ports this surcharge applies to
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+      required:
+      - code
+      - name
+      - applicability
     QueryBankRateQueryResponse:
       type: object
       properties:
@@ -209,102 +264,6 @@ components:
             queryTimeMs:
               type: integer
               description: Query execution time in milliseconds
-    CombinedContainerRate:
-      type: object
-      properties:
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        amount:
-          type: number
-          description: Total combined rate amount
-        currency:
-          type: string
-          example: USD
-        breakdown:
-          type: object
-          properties:
-            preCarriage:
-              type: number
-              description: Pre-carriage portion
-            main:
-              type: number
-              description: Ocean freight portion
-            onCarriage:
-              type: number
-              description: On-carriage portion
-          description: Per-leg breakdown of the total amount
-      required:
-      - containerType
-      - containerSize
-      - amount
-      - currency
-    SurchargeContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-          - all
-        amount:
-          type: number
-        currency:
-          type: string
-          example: USD
-      required:
-      - containerSize
-      - amount
-      - currency
-    LegContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-        amount:
-          type: number
-          description: Rate amount
-        currency:
-          type: string
-          description: Currency code (ISO 4217)
-          example: USD
-      required:
-      - containerSize
-      - containerType
-      - amount
-      - currency
     CombinedRate:
       type: object
       properties:
@@ -378,6 +337,37 @@ components:
       - containerRates
       - sourceId
       - sourceName
+    RateLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - pre_carriage
+          - main
+          - on_carriage
+          description: Leg type
+        origin:
+          $ref: '#/components/schemas/LocationInfo'
+        destination:
+          $ref: '#/components/schemas/LocationInfo'
+        mode:
+          type: string
+          enum:
+          - truck
+          - rail
+          - barge
+          - ocean
+          description: Transport mode for this leg
+        rates:
+          description: Container rates for this specific leg
+          type: array
+          items:
+            $ref: '#/components/schemas/LegContainerRate'
+      required:
+      - type
+      - origin
+      - destination
     QueryBankRateQueryRequest:
       type: object
       properties:
@@ -459,6 +449,123 @@ components:
           type: integer
           default: 0
           description: Number of rates to skip for pagination
+    LegContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+        amount:
+          type: number
+          description: Rate amount
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: USD
+      required:
+      - containerSize
+      - containerType
+      - amount
+      - currency
+    CombinedContainerRate:
+      type: object
+      properties:
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        amount:
+          type: number
+          description: Total combined rate amount
+        currency:
+          type: string
+          example: USD
+        breakdown:
+          type: object
+          properties:
+            preCarriage:
+              type: number
+              description: Pre-carriage portion
+            main:
+              type: number
+              description: Ocean freight portion
+            onCarriage:
+              type: number
+              description: On-carriage portion
+          description: Per-leg breakdown of the total amount
+      required:
+      - containerType
+      - containerSize
+      - amount
+      - currency
+    SurchargeContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+          - all
+        amount:
+          type: number
+        currency:
+          type: string
+          example: USD
+      required:
+      - containerSize
+      - amount
+      - currency
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
     LocationInfo:
       type: object
       properties:
@@ -481,110 +588,6 @@ components:
       required:
       - code
       - type
-    RateSurcharge:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Surcharge code (e.g., BAF, CAF, THC)
-          example: BAF
-        name:
-          type: string
-          description: Surcharge display name
-          example: Bunker Adjustment Factor
-        applicability:
-          type: string
-          enum:
-          - inclusive
-          - subject_to
-          - not_subject_to
-          - not_applicable
-          description: Whether this surcharge is included in base rate or additional
-        basis:
-          type: string
-          description: Charging basis (e.g., per_container, per_bl, percentage)
-          example: per_container
-        amount:
-          type: number
-          description: Default surcharge amount (when not container-specific)
-        currency:
-          type: string
-          example: USD
-        containerRates:
-          description: Container-specific surcharge amounts
-          type: array
-          items:
-            $ref: '#/components/schemas/SurchargeContainerRate'
-        percentage:
-          type: number
-          description: Percentage-based surcharge (if applicable)
-        applicablePorts:
-          type: array
-          items:
-            type: string
-          description: Specific ports this surcharge applies to
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-      required:
-      - code
-      - name
-      - applicability
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
-    RateLeg:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - pre_carriage
-          - main
-          - on_carriage
-          description: Leg type
-        origin:
-          $ref: '#/components/schemas/LocationInfo'
-        destination:
-          $ref: '#/components/schemas/LocationInfo'
-        mode:
-          type: string
-          enum:
-          - truck
-          - rail
-          - barge
-          - ocean
-          description: Transport mode for this leg
-        rates:
-          description: Container rates for this specific leg
-          type: array
-          items:
-            $ref: '#/components/schemas/LegContainerRate'
-      required:
-      - type
-      - origin
-      - destination
   securitySchemes:
     bearerAuth:
       type: http

@@ -1,8 +1,11 @@
-openapi: 3.1.0
+openapi: 3.2.0
 info:
-  title: Wove External Authentication Documents API
+  title: Wove External Documents API
   version: 1.0.0
-  description: "# Wove External API Documentation\n\nThe Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.\n\n## Features\n\n- **OAuth 2.0 Authentication**: Secure client credentials flow\n- **Rate Limiting**: Configurable per-client rate limits\n- **Document Processing**: Upload, validate, and merge shipping documents\n- **Shipment Management**: Create and manage shipment records with validation and merge operations\n- **Webhooks**: Get notified of document processing events (extraction, validation, merge)\n- **Comprehensive Error Handling**: Detailed error responses with troubleshooting information\n\n## Getting Started\n\n1. **Create OAuth Client**: Contact your account manager to create OAuth credentials\n2. **Get Access Token**: Use client credentials flow to obtain bearer token\n3. **Make API Calls**: Include bearer token in Authorization header\n4. **Handle Rate Limits**: Monitor rate limit headers in responses\n\n## Authentication\n\nAll API endpoints require OAuth 2.0 authentication using the client credentials flow.\n\n### Getting an Access Token\n\n```bash\ncurl -X POST https://api.wove.com/api/v1/external/auth/token \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"grant_type\": \"client_credentials\",\n    \"client_id\": \"your_client_id\",\n    \"client_secret\": \"your_client_secret\"\n  }'\n```\n\n### Using the Access Token\n\nInclude the access token in the Authorization header:\n\n```bash\ncurl -H \"Authorization: Bearer your_access_token\" \\\n  https://api.wove.com/api/v1/external/shipments\n```\n\n## Rate Limiting\n\nAll endpoints are subject to rate limiting based on your OAuth client configuration:\n\n- **Per-minute limit**: Default 60 requests/minute\n- **Daily limit**: Default 10,000 requests/day\n\nRate limit information is included in response headers:\n- `X-RateLimit-Limit-Minute`: Your per-minute limit\n- `X-RateLimit-Remaining-Minute`: Remaining requests this minute\n- `X-RateLimit-Reset-Minute`: When the minute window resets\n- `X-RateLimit-Limit-Day`: Your daily limit\n- `X-RateLimit-Remaining-Day`: Remaining requests today\n- `X-RateLimit-Reset-Day`: When the daily window resets\n\n## Webhook Security\n\nAll webhook payloads are signed using HMAC-SHA256 for verification:\n\n```javascript\n// Verify webhook signature\nconst crypto = require('crypto');\nconst signature = request.headers['x-wove-signature'];\nconst payload = JSON.stringify(request.body);\nconst expectedSignature = crypto\n  .createHmac('sha256', your_webhook_secret)\n  .update(payload)\n  .digest('hex');\n\nconst isValid = crypto.timingSafeEqual(\n  Buffer.from(signature),\n  Buffer.from(expectedSignature)\n);\n```\n\nHeaders included with every webhook:\n- `X-Wove-Signature`: HMAC-SHA256 signature of the payload\n- `X-Wove-Event`: Event type (e.g., \"extraction.completed\")\n- `X-Wove-Timestamp`: ISO timestamp when the webhook was sent\n\n## Error Handling\n\nAll errors follow a consistent format:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"One or more documents not found or access denied\",\n    \"details\": {\n      \"field\": \"documentIds\",\n      \"value\": [\"invalid_id\"]\n    }\n  }\n}\n```\n\n### Error Codes\n\n- `VALIDATION_ERROR` - Invalid request parameters or data validation failure\n- `AUTHENTICATION_ERROR` - Invalid or expired credentials\n- `AUTHORIZATION_ERROR` - Insufficient permissions for the requested operation\n- `NOT_FOUND` - Requested resource not found\n- `RATE_LIMIT_ERROR` - Too many requests, rate limit exceeded\n- `INTERNAL_ERROR` - Internal server error\n\nSee the common error responses in the components section for detailed examples.\n"
+  description: '# Wove External API Documentation
+
+
+    The Wove External API allows you to programmatically access document processing, shipment management, and validation capabilities.'
   contact:
     name: Wove API Support
     email: api-support@wove.com
@@ -72,6 +75,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Document'
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocuments
+      x-operation-id-source: derived
     post:
       tags:
       - Documents
@@ -118,6 +123,8 @@ paths:
                   message:
                     type: string
                     example: Document uploaded successfully and extraction queued
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocuments
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}:
     get:
       tags:
@@ -161,6 +168,8 @@ paths:
                           description: Associated validation items
         '404':
           description: Document not found
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentId
+      x-operation-id-source: derived
     put:
       tags:
       - Documents
@@ -209,6 +218,8 @@ paths:
                     type: boolean
                   data:
                     $ref: '#/components/schemas/Document'
+      operationId: putApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentId
+      x-operation-id-source: derived
     delete:
       tags:
       - Documents
@@ -234,6 +245,8 @@ paths:
           description: Document deleted successfully
         '404':
           description: Document not found
+      operationId: deleteApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentId
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}/download:
     get:
       tags:
@@ -269,6 +282,8 @@ paths:
                 format: binary
         '404':
           description: Document not found
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentIdDownload
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extraction:
     get:
       tags:
@@ -319,6 +334,8 @@ paths:
                         format: date-time
                       extractionMethod:
                         type: string
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentIdExtraction
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extract:
     post:
       tags:
@@ -372,6 +389,8 @@ paths:
                         type: string
                       message:
                         type: string
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentIdExtract
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}/extracted-data:
     put:
       tags:
@@ -423,6 +442,8 @@ paths:
                     type: object
                   message:
                     type: string
+      operationId: putApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentIdExtractedData
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/{documentId}/history:
     get:
       tags:
@@ -458,6 +479,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/DocumentHistoryEntry'
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsByDocumentIdHistory
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/validate:
     post:
       tags:
@@ -516,6 +539,8 @@ paths:
                         type: array
                         items:
                           type: string
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsValidate
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/cross-validate/{jobId}:
     get:
       tags:
@@ -613,6 +638,8 @@ paths:
                             nullable: true
         '404':
           description: Job not found
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsCrossValidateByJobId
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/merge/{jobId}:
     get:
       tags:
@@ -679,14 +706,14 @@ paths:
                             nullable: true
         '404':
           description: Job not found
+      operationId: getApiV1ExternalShipmentsByShipmentIdDocumentsMergeByJobId
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/cross-validate:
     post:
       tags:
       - Documents
       summary: Cross-validate documents
-      description: 'Create a cross-validation job to check for inconsistencies between documents in a shipment.
-
-        '
+      description: Create a cross-validation job to check for inconsistencies between documents in a shipment.
       security:
       - bearerAuth: []
       parameters:
@@ -723,6 +750,8 @@ paths:
           description: Invalid request
         '404':
           description: Shipment not found
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsCrossValidate
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/merge:
     post:
       tags:
@@ -730,9 +759,7 @@ paths:
       summary: Merge shipment documents
       description: 'Create a job to merge data from multiple documents within a shipment.
 
-        Intelligently combines data from related documents (e.g., commercial invoice and packing list).
-
-        '
+        Intelligently combines data from related documents (e.g., commercial invoice and packing list).'
       security:
       - bearerAuth: []
       parameters:
@@ -764,6 +791,8 @@ paths:
           description: Invalid request or documents not found
         '404':
           description: Shipment not found
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsMerge
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/analyze-types:
     post:
       tags:
@@ -773,9 +802,7 @@ paths:
 
         For PDFs, this will identify different document types and their page boundaries.
 
-        For other file types, it will identify the document type based on content.
-
-        '
+        For other file types, it will identify the document type based on content.'
       security:
       - bearerAuth: []
       parameters:
@@ -855,6 +882,8 @@ paths:
           description: Shipment not found
         '413':
           description: File too large
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsAnalyzeTypes
+      x-operation-id-source: derived
   /api/v1/external/shipments/{shipmentId}/documents/upload-multi:
     post:
       tags:
@@ -864,9 +893,7 @@ paths:
 
         For PDFs with multiple document types, this will create separate document records for each type.
 
-        The original file is stored once, with virtual splits created for each document type.
-
-        '
+        The original file is stored once, with virtual splits created for each document type.'
       security:
       - bearerAuth: []
       parameters:
@@ -939,6 +966,8 @@ paths:
           description: Shipment not found
         '413':
           description: File too large
+      operationId: postApiV1ExternalShipmentsByShipmentIdDocumentsUploadMulti
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents:
     get:
       tags:
@@ -946,9 +975,7 @@ paths:
       summary: List entity documents
       description: 'Retrieve all documents associated with a specific entity.
 
-        Supports any entity type (shipment, rfq_shipment, etc.).
-
-        '
+        Supports any entity type (shipment, rfq_shipment, etc.).'
       security:
       - bearerAuth: []
       parameters:
@@ -1003,15 +1030,15 @@ paths:
                       $ref: '#/components/schemas/Document'
         '404':
           description: Entity not found
+      operationId: getApiV1ExternalEntitiesByEntityTypeByEntityIdDocuments
+      x-operation-id-source: derived
     post:
       tags:
       - Documents
       summary: Upload document to entity
       description: 'Upload a single document and attach it to an entity.
 
-        Document type can be auto-detected or explicitly specified.
-
-        '
+        Document type can be auto-detected or explicitly specified.'
       security:
       - bearerAuth: []
       parameters:
@@ -1064,6 +1091,8 @@ paths:
           description: Invalid file or parameters
         '404':
           description: Entity not found
+      operationId: postApiV1ExternalEntitiesByEntityTypeByEntityIdDocuments
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents/multi:
     post:
       tags:
@@ -1071,9 +1100,7 @@ paths:
       summary: Upload multi-document PDF
       description: 'Upload a single PDF file containing multiple documents.
 
-        The system will automatically split and classify each document.
-
-        '
+        The system will automatically split and classify each document.'
       security:
       - bearerAuth: []
       parameters:
@@ -1136,6 +1163,8 @@ paths:
           description: Invalid file or parameters
         '404':
           description: Entity not found
+      operationId: postApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsMulti
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}:
     get:
       tags:
@@ -1180,6 +1209,8 @@ paths:
                     $ref: '#/components/schemas/Document'
         '404':
           description: Document or entity not found
+      operationId: getApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentId
+      x-operation-id-source: derived
     put:
       tags:
       - Documents
@@ -1235,6 +1266,8 @@ paths:
                     type: string
         '404':
           description: Document or entity not found
+      operationId: putApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentId
+      x-operation-id-source: derived
     delete:
       tags:
       - Documents
@@ -1269,6 +1302,8 @@ paths:
           description: Document deleted successfully
         '404':
           description: Document or entity not found
+      operationId: deleteApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentId
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/download:
     get:
       tags:
@@ -1313,6 +1348,8 @@ paths:
                 format: binary
         '404':
           description: Document or entity not found
+      operationId: getApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentIdDownload
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/preview:
     get:
       tags:
@@ -1370,6 +1407,8 @@ paths:
                         description: URL expiration time
         '404':
           description: Document or entity not found
+      operationId: getApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentIdPreview
+      x-operation-id-source: derived
   /api/v1/external/entities/{entityType}/{entityId}/documents/{documentId}/history:
     get:
       tags:
@@ -1416,6 +1455,8 @@ paths:
                       $ref: '#/components/schemas/DocumentHistoryEntry'
         '404':
           description: Document or entity not found
+      operationId: getApiV1ExternalEntitiesByEntityTypeByEntityIdDocumentsByDocumentIdHistory
+      x-operation-id-source: derived
   /api/v1/external/documents/guess-type:
     post:
       tags:
@@ -1437,9 +1478,7 @@ paths:
 
         - Spreadsheets (Excel, CSV)
 
-        - Word documents (DOCX)
-
-        '
+        - Word documents (DOCX)'
       security:
       - bearerAuth: []
       requestBody:
@@ -1542,8 +1581,31 @@ paths:
                 error:
                   code: FORBIDDEN
                   message: 'Insufficient scope: documents:read required'
+      operationId: postApiV1ExternalDocumentsGuessType
+      x-operation-id-source: derived
 components:
   schemas:
+    MergeJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: '1014851234567890123'
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          example: pending
+        documentIds:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+          example: Merge job created. Use the job ID to check status.
     MergeDocumentsRequest:
       type: object
       properties:
@@ -1554,16 +1616,27 @@ components:
           minItems: 2
       required:
       - documentIds
-    ValidateDocumentsRequest:
+    ErrorResponse:
       type: object
       properties:
-        documentIds:
-          type: array
-          items:
-            type: string
-          minItems: 1
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
       required:
-      - documentIds
+      - success
+      - error
     Document:
       type: object
       properties:
@@ -1615,48 +1688,16 @@ components:
         updatedAt:
           type: string
           format: date-time
-    MergeJobResponse:
+    ValidateDocumentsRequest:
       type: object
       properties:
-        jobId:
-          type: string
-          example: '1014851234567890123'
-        status:
-          type: string
-          enum:
-          - pending
-          - processing
-          - completed
-          - failed
-          example: pending
         documentIds:
           type: array
           items:
             type: string
-        message:
-          type: string
-          example: Merge job created. Use the job ID to check status.
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
+          minItems: 1
       required:
-      - success
-      - error
+      - documentIds
     DocumentHistoryEntry:
       type: object
       properties:
