@@ -193,6 +193,78 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    QueryBankRateQueryResponse:
+      type: object
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedRate'
+        metadata:
+          type: object
+          properties:
+            totalRates:
+              type: integer
+              description: Total number of matching rates
+            sourcesSearched:
+              type: integer
+              description: Number of sources searched
+            queryTimeMs:
+              type: integer
+              description: Query execution time in milliseconds
+    LocationInfo:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Location code (UN/LOCODE for ports)
+          example: CNSHA
+        name:
+          type: string
+          description: Location display name
+          example: Shanghai
+        type:
+          type: string
+          enum:
+          - port
+          - city
+          - address
+          - region
+          description: Type of location
+      required:
+      - code
+      - type
+    RateLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - pre_carriage
+          - main
+          - on_carriage
+          description: Leg type
+        origin:
+          $ref: '#/components/schemas/LocationInfo'
+        destination:
+          $ref: '#/components/schemas/LocationInfo'
+        mode:
+          type: string
+          enum:
+          - truck
+          - rail
+          - barge
+          - ocean
+          description: Transport mode for this leg
+        rates:
+          description: Container rates for this specific leg
+          type: array
+          items:
+            $ref: '#/components/schemas/LegContainerRate'
+      required:
+      - type
+      - origin
+      - destination
     RateSurcharge:
       type: object
       properties:
@@ -245,25 +317,35 @@ components:
       - code
       - name
       - applicability
-    QueryBankRateQueryResponse:
+    LegContainerRate:
       type: object
       properties:
-        rates:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombinedRate'
-        metadata:
-          type: object
-          properties:
-            totalRates:
-              type: integer
-              description: Total number of matching rates
-            sourcesSearched:
-              type: integer
-              description: Number of sources searched
-            queryTimeMs:
-              type: integer
-              description: Query execution time in milliseconds
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+        amount:
+          type: number
+          description: Rate amount
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: USD
+      required:
+      - containerSize
+      - containerType
+      - amount
+      - currency
     CombinedRate:
       type: object
       properties:
@@ -337,37 +419,73 @@ components:
       - containerRates
       - sourceId
       - sourceName
-    RateLeg:
+    CombinedContainerRate:
       type: object
       properties:
-        type:
+        containerType:
           type: string
           enum:
-          - pre_carriage
-          - main
-          - on_carriage
-          description: Leg type
-        origin:
-          $ref: '#/components/schemas/LocationInfo'
-        destination:
-          $ref: '#/components/schemas/LocationInfo'
-        mode:
+          - dry
+          - reefer
+          - nor
+        containerSize:
           type: string
           enum:
-          - truck
-          - rail
-          - barge
-          - ocean
-          description: Transport mode for this leg
-        rates:
-          description: Container rates for this specific leg
-          type: array
-          items:
-            $ref: '#/components/schemas/LegContainerRate'
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        amount:
+          type: number
+          description: Total combined rate amount
+        currency:
+          type: string
+          example: USD
+        breakdown:
+          type: object
+          properties:
+            preCarriage:
+              type: number
+              description: Pre-carriage portion
+            main:
+              type: number
+              description: Ocean freight portion
+            onCarriage:
+              type: number
+              description: On-carriage portion
+          description: Per-leg breakdown of the total amount
       required:
-      - type
-      - origin
-      - destination
+      - containerType
+      - containerSize
+      - amount
+      - currency
+    SurchargeContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+          - all
+        amount:
+          type: number
+        currency:
+          type: string
+          example: USD
+      required:
+      - containerSize
+      - amount
+      - currency
     QueryBankRateQueryRequest:
       type: object
       properties:
@@ -449,102 +567,6 @@ components:
           type: integer
           default: 0
           description: Number of rates to skip for pagination
-    LegContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-        amount:
-          type: number
-          description: Rate amount
-        currency:
-          type: string
-          description: Currency code (ISO 4217)
-          example: USD
-      required:
-      - containerSize
-      - containerType
-      - amount
-      - currency
-    CombinedContainerRate:
-      type: object
-      properties:
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        amount:
-          type: number
-          description: Total combined rate amount
-        currency:
-          type: string
-          example: USD
-        breakdown:
-          type: object
-          properties:
-            preCarriage:
-              type: number
-              description: Pre-carriage portion
-            main:
-              type: number
-              description: Ocean freight portion
-            onCarriage:
-              type: number
-              description: On-carriage portion
-          description: Per-leg breakdown of the total amount
-      required:
-      - containerType
-      - containerSize
-      - amount
-      - currency
-    SurchargeContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-          - all
-        amount:
-          type: number
-        currency:
-          type: string
-          example: USD
-      required:
-      - containerSize
-      - amount
-      - currency
     ErrorResponse:
       type: object
       properties:
@@ -566,28 +588,6 @@ components:
       required:
       - success
       - error
-    LocationInfo:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Location code (UN/LOCODE for ports)
-          example: CNSHA
-        name:
-          type: string
-          description: Location display name
-          example: Shanghai
-        type:
-          type: string
-          enum:
-          - port
-          - city
-          - address
-          - region
-          description: Type of location
-      required:
-      - code
-      - type
   securitySchemes:
     bearerAuth:
       type: http

@@ -492,6 +492,37 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    CreateWebhookRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS URL to receive webhook notifications
+        events:
+          type: array
+          items:
+            type: string
+            enum:
+            - extraction.completed
+            - extraction.failed
+            - validation.completed
+            - validation.failed
+            - merge.completed
+            - merge.failed
+            - document.uploaded
+            - document.deleted
+            - shipment.created
+            - shipment.updated
+            - source.processing.completed
+            - source.processing.failed
+            - webhook.test
+          minItems: 1
+        description:
+          type: string
+      required:
+      - url
+      - events
     Webhook:
       type: object
       properties:
@@ -545,37 +576,6 @@ components:
       required:
       - success
       - data
-    CreateWebhookRequest:
-      type: object
-      properties:
-        url:
-          type: string
-          format: uri
-          description: HTTPS URL to receive webhook notifications
-        events:
-          type: array
-          items:
-            type: string
-            enum:
-            - extraction.completed
-            - extraction.failed
-            - validation.completed
-            - validation.failed
-            - merge.completed
-            - merge.failed
-            - document.uploaded
-            - document.deleted
-            - shipment.created
-            - shipment.updated
-            - source.processing.completed
-            - source.processing.failed
-            - webhook.test
-          minItems: 1
-        description:
-          type: string
-      required:
-      - url
-      - events
   securitySchemes:
     bearerAuth:
       type: http

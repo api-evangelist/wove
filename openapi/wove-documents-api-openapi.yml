@@ -1606,37 +1606,6 @@ components:
         message:
           type: string
           example: Merge job created. Use the job ID to check status.
-    MergeDocumentsRequest:
-      type: object
-      properties:
-        documentIds:
-          type: array
-          items:
-            type: string
-          minItems: 2
-      required:
-      - documentIds
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
     Document:
       type: object
       properties:
@@ -1688,16 +1657,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-    ValidateDocumentsRequest:
-      type: object
-      properties:
-        documentIds:
-          type: array
-          items:
-            type: string
-          minItems: 1
-      required:
-      - documentIds
     DocumentHistoryEntry:
       type: object
       properties:
@@ -1713,6 +1672,47 @@ components:
         changes:
           type: object
           additionalProperties: true
+    ValidateDocumentsRequest:
+      type: object
+      properties:
+        documentIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+      - documentIds
+    MergeDocumentsRequest:
+      type: object
+      properties:
+        documentIds:
+          type: array
+          items:
+            type: string
+          minItems: 2
+      required:
+      - documentIds
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
   securitySchemes:
     bearerAuth:
       type: http

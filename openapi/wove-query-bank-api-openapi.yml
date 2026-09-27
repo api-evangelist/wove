@@ -180,6 +180,44 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    ExternalQueryBankSource:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Query Bank entry ID
+        sourceId:
+          type: string
+          description: The linked source ID
+        filename:
+          type: string
+          description: Source filename
+        carrierId:
+          type: string
+        carrierName:
+          type: string
+        sourceType:
+          type: string
+        rateCount:
+          type: integer
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        linkedAt:
+          type: string
+          format: date-time
+          description: When the source was added to Query Bank
+    AddSourceToQueryBankRequest:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: The source ID to add to Query Bank
+      required:
+      - sourceId
     AddSourceToQueryBankResponse:
       type: object
       properties:
@@ -223,44 +261,6 @@ components:
       required:
       - success
       - error
-    AddSourceToQueryBankRequest:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: The source ID to add to Query Bank
-      required:
-      - sourceId
-    ExternalQueryBankSource:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Query Bank entry ID
-        sourceId:
-          type: string
-          description: The linked source ID
-        filename:
-          type: string
-          description: Source filename
-        carrierId:
-          type: string
-        carrierName:
-          type: string
-        sourceType:
-          type: string
-        rateCount:
-          type: integer
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-        linkedAt:
-          type: string
-          format: date-time
-          description: When the source was added to Query Bank
   securitySchemes:
     bearerAuth:
       type: http
