@@ -210,25 +210,6 @@ components:
           type: string
           format: date-time
           description: When the source was added to Query Bank
-    AddSourceToQueryBankRequest:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: The source ID to add to Query Bank
-      required:
-      - sourceId
-    AddSourceToQueryBankResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-        linkedAt:
-          type: string
-          format: date-time
-      required:
-      - sourceId
-      - linkedAt
     RemoveSourceFromQueryBankResponse:
       type: object
       properties:
@@ -240,6 +221,17 @@ components:
       required:
       - sourceId
       - unlinkedAt
+    AddSourceToQueryBankResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+        linkedAt:
+          type: string
+          format: date-time
+      required:
+      - sourceId
+      - linkedAt
     ErrorResponse:
       type: object
       properties:
@@ -261,6 +253,14 @@ components:
       required:
       - success
       - error
+    AddSourceToQueryBankRequest:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: The source ID to add to Query Bank
+      required:
+      - sourceId
   securitySchemes:
     bearerAuth:
       type: http

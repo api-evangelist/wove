@@ -125,43 +125,6 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    TokenResponse:
-      type: object
-      properties:
-        access_token:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIs...
-        token_type:
-          type: string
-          example: Bearer
-        expires_in:
-          type: integer
-          example: 3600
-          description: Token lifetime in seconds
-        scope:
-          type: string
-          example: shipments:read documents:read validation:create
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
     TokenRequest:
       type: object
       properties:
@@ -184,6 +147,22 @@ components:
       - grant_type
       - client_id
       - client_secret
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 3600
+          description: Token lifetime in seconds
+        scope:
+          type: string
+          example: shipments:read documents:read validation:create
     SuccessResponse:
       type: object
       properties:
@@ -199,6 +178,27 @@ components:
       required:
       - success
       - data
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
   securitySchemes:
     bearerAuth:
       type: http

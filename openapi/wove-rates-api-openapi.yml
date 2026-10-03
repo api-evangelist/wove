@@ -193,25 +193,127 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    QueryBankRateQueryResponse:
+    QueryBankRateQueryRequest:
       type: object
       properties:
-        rates:
+        origins:
           type: array
           items:
-            $ref: '#/components/schemas/CombinedRate'
-        metadata:
+            type: string
+          description: Inland origin codes or region codes (USWC, USEC, etc.) for door moves
+          example:
+          - USWC
+          - USCHI
+        destinations:
+          type: array
+          items:
+            type: string
+          description: Inland destination codes or region codes for door moves
+          example:
+          - CNSHA
+          - CNNBO
+        loadingPorts:
+          type: array
+          items:
+            type: string
+          description: Port of loading codes (UN/LOCODE format)
+          example:
+          - CNSHA
+          - CNNBO
+        dischargePorts:
+          type: array
+          items:
+            type: string
+          description: Port of discharge codes (UN/LOCODE format)
+          example:
+          - USLAX
+          - USLGB
+        effectiveDate:
+          type: string
+          format: date
+          description: Filter rates effective on or after this date
+        expiryDate:
+          type: string
+          format: date
+          description: Filter rates that haven't expired by this date
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          description: Container type filter
+        containerSizes:
+          type: array
+          items:
+            type: string
+            enum:
+            - 20ft
+            - 40ft
+            - 40ft_hc
+            - 45ft
+          description: Container size filter
+        carrierCodes:
+          type: array
+          items:
+            type: string
+          description: Filter by specific carrier SCAC codes
+          example:
+          - MAEU
+          - MSCU
+          - COSU
+        commodityType:
+          type: string
+          description: Filter by commodity type
+        limit:
+          type: integer
+          default: 100
+          maximum: 500
+          description: Maximum number of rates to return
+        offset:
+          type: integer
+          default: 0
+          description: Number of rates to skip for pagination
+    CombinedContainerRate:
+      type: object
+      properties:
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        amount:
+          type: number
+          description: Total combined rate amount
+        currency:
+          type: string
+          example: USD
+        breakdown:
           type: object
           properties:
-            totalRates:
-              type: integer
-              description: Total number of matching rates
-            sourcesSearched:
-              type: integer
-              description: Number of sources searched
-            queryTimeMs:
-              type: integer
-              description: Query execution time in milliseconds
+            preCarriage:
+              type: number
+              description: Pre-carriage portion
+            main:
+              type: number
+              description: Ocean freight portion
+            onCarriage:
+              type: number
+              description: On-carriage portion
+          description: Per-leg breakdown of the total amount
+      required:
+      - containerType
+      - containerSize
+      - amount
+      - currency
     LocationInfo:
       type: object
       properties:
@@ -234,6 +336,35 @@ components:
       required:
       - code
       - type
+    LegContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+        amount:
+          type: number
+          description: Rate amount
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: USD
+      required:
+      - containerSize
+      - containerType
+      - amount
+      - currency
     RateLeg:
       type: object
       properties:
@@ -317,35 +448,46 @@ components:
       - code
       - name
       - applicability
-    LegContainerRate:
+    QueryBankRateQueryResponse:
       type: object
       properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-        amount:
-          type: number
-          description: Rate amount
-        currency:
-          type: string
-          description: Currency code (ISO 4217)
-          example: USD
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedRate'
+        metadata:
+          type: object
+          properties:
+            totalRates:
+              type: integer
+              description: Total number of matching rates
+            sourcesSearched:
+              type: integer
+              description: Number of sources searched
+            queryTimeMs:
+              type: integer
+              description: Query execution time in milliseconds
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
       required:
-      - containerSize
-      - containerType
-      - amount
-      - currency
+      - success
+      - error
     CombinedRate:
       type: object
       properties:
@@ -419,46 +561,6 @@ components:
       - containerRates
       - sourceId
       - sourceName
-    CombinedContainerRate:
-      type: object
-      properties:
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        amount:
-          type: number
-          description: Total combined rate amount
-        currency:
-          type: string
-          example: USD
-        breakdown:
-          type: object
-          properties:
-            preCarriage:
-              type: number
-              description: Pre-carriage portion
-            main:
-              type: number
-              description: Ocean freight portion
-            onCarriage:
-              type: number
-              description: On-carriage portion
-          description: Per-leg breakdown of the total amount
-      required:
-      - containerType
-      - containerSize
-      - amount
-      - currency
     SurchargeContainerRate:
       type: object
       properties:
@@ -486,108 +588,6 @@ components:
       - containerSize
       - amount
       - currency
-    QueryBankRateQueryRequest:
-      type: object
-      properties:
-        origins:
-          type: array
-          items:
-            type: string
-          description: Inland origin codes or region codes (USWC, USEC, etc.) for door moves
-          example:
-          - USWC
-          - USCHI
-        destinations:
-          type: array
-          items:
-            type: string
-          description: Inland destination codes or region codes for door moves
-          example:
-          - CNSHA
-          - CNNBO
-        loadingPorts:
-          type: array
-          items:
-            type: string
-          description: Port of loading codes (UN/LOCODE format)
-          example:
-          - CNSHA
-          - CNNBO
-        dischargePorts:
-          type: array
-          items:
-            type: string
-          description: Port of discharge codes (UN/LOCODE format)
-          example:
-          - USLAX
-          - USLGB
-        effectiveDate:
-          type: string
-          format: date
-          description: Filter rates effective on or after this date
-        expiryDate:
-          type: string
-          format: date
-          description: Filter rates that haven't expired by this date
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          description: Container type filter
-        containerSizes:
-          type: array
-          items:
-            type: string
-            enum:
-            - 20ft
-            - 40ft
-            - 40ft_hc
-            - 45ft
-          description: Container size filter
-        carrierCodes:
-          type: array
-          items:
-            type: string
-          description: Filter by specific carrier SCAC codes
-          example:
-          - MAEU
-          - MSCU
-          - COSU
-        commodityType:
-          type: string
-          description: Filter by commodity type
-        limit:
-          type: integer
-          default: 100
-          maximum: 500
-          description: Maximum number of rates to return
-        offset:
-          type: integer
-          default: 0
-          description: Number of rates to skip for pagination
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
   securitySchemes:
     bearerAuth:
       type: http

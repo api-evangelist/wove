@@ -302,6 +302,100 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    CreateSourceUploadRequest:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: The filename of the rate sheet to upload
+          example: carrier_rates_2024.xlsx
+        contentType:
+          type: string
+          description: MIME type of the file
+          example: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        sourceType:
+          type: string
+          enum:
+          - contract
+          - spot
+          - tariff
+          description: Type of rate sheet
+        carrierId:
+          type: string
+          description: Optional carrier ID to associate with this source
+        effectiveDate:
+          type: string
+          format: date
+          description: Date when rates become effective
+        expiryDate:
+          type: string
+          format: date
+          description: Date when rates expire
+        description:
+          type: string
+          description: Optional description of the source
+      required:
+      - filename
+    ExternalSourceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Source ID
+        filename:
+          type: string
+          description: Original filename
+        status:
+          type: string
+          enum:
+          - awaiting_upload
+          - pending
+          - processing
+          - complete
+          - failed
+          description: Processing status
+        sourceType:
+          type: string
+          enum:
+          - contract
+          - spot
+          - tariff
+        carrierId:
+          type: string
+        carrierName:
+          type: string
+        rateCount:
+          type: integer
+          description: Number of rates extracted from this source
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+    CreateSourceUploadResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: Unique identifier for the created source
+        uploadUrl:
+          type: string
+          description: Presigned URL for uploading the file (expires in 15 minutes)
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the upload URL expires
+      required:
+      - sourceId
+      - uploadUrl
+      - expiresAt
     ExternalSourceDetail:
       type: object
       properties:
@@ -347,100 +441,6 @@ components:
           type: string
           nullable: true
           description: Error message if processing failed
-    CreateSourceUploadResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: Unique identifier for the created source
-        uploadUrl:
-          type: string
-          description: Presigned URL for uploading the file (expires in 15 minutes)
-        expiresAt:
-          type: string
-          format: date-time
-          description: When the upload URL expires
-      required:
-      - sourceId
-      - uploadUrl
-      - expiresAt
-    ExternalSourceSummary:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Source ID
-        filename:
-          type: string
-          description: Original filename
-        status:
-          type: string
-          enum:
-          - awaiting_upload
-          - pending
-          - processing
-          - complete
-          - failed
-          description: Processing status
-        sourceType:
-          type: string
-          enum:
-          - contract
-          - spot
-          - tariff
-        carrierId:
-          type: string
-        carrierName:
-          type: string
-        rateCount:
-          type: integer
-          description: Number of rates extracted from this source
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-        createdAt:
-          type: string
-          format: date-time
-        processedAt:
-          type: string
-          format: date-time
-    CreateSourceUploadRequest:
-      type: object
-      properties:
-        filename:
-          type: string
-          description: The filename of the rate sheet to upload
-          example: carrier_rates_2024.xlsx
-        contentType:
-          type: string
-          description: MIME type of the file
-          example: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-        sourceType:
-          type: string
-          enum:
-          - contract
-          - spot
-          - tariff
-          description: Type of rate sheet
-        carrierId:
-          type: string
-          description: Optional carrier ID to associate with this source
-        effectiveDate:
-          type: string
-          format: date
-          description: Date when rates become effective
-        expiryDate:
-          type: string
-          format: date
-          description: Date when rates expire
-        description:
-          type: string
-          description: Optional description of the source
-      required:
-      - filename
     ProcessSourceResponse:
       type: object
       properties:
