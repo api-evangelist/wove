@@ -302,6 +302,68 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    ExternalSourceDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        status:
+          type: string
+          enum:
+          - awaiting_upload
+          - pending
+          - processing
+          - complete
+          - failed
+        sourceType:
+          type: string
+          enum:
+          - contract
+          - spot
+          - tariff
+        carrierId:
+          type: string
+        carrierName:
+          type: string
+        rateCount:
+          type: integer
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+          nullable: true
+          description: Error message if processing failed
+    CreateSourceUploadResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: Unique identifier for the created source
+        uploadUrl:
+          type: string
+          description: Presigned URL for uploading the file (expires in 15 minutes)
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the upload URL expires
+      required:
+      - sourceId
+      - uploadUrl
+      - expiresAt
     CreateSourceUploadRequest:
       type: object
       properties:
@@ -379,86 +441,6 @@ components:
         processedAt:
           type: string
           format: date-time
-    CreateSourceUploadResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: Unique identifier for the created source
-        uploadUrl:
-          type: string
-          description: Presigned URL for uploading the file (expires in 15 minutes)
-        expiresAt:
-          type: string
-          format: date-time
-          description: When the upload URL expires
-      required:
-      - sourceId
-      - uploadUrl
-      - expiresAt
-    ExternalSourceDetail:
-      type: object
-      properties:
-        id:
-          type: string
-        filename:
-          type: string
-        status:
-          type: string
-          enum:
-          - awaiting_upload
-          - pending
-          - processing
-          - complete
-          - failed
-        sourceType:
-          type: string
-          enum:
-          - contract
-          - spot
-          - tariff
-        carrierId:
-          type: string
-        carrierName:
-          type: string
-        rateCount:
-          type: integer
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-        description:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        processedAt:
-          type: string
-          format: date-time
-        error:
-          type: string
-          nullable: true
-          description: Error message if processing failed
-    ProcessSourceResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: The source ID
-        status:
-          type: string
-          enum:
-          - pending
-          - processing
-          description: Current processing status
-        message:
-          type: string
-          description: Status message
-      required:
-      - sourceId
-      - status
     ErrorResponse:
       type: object
       properties:
@@ -480,6 +462,24 @@ components:
       required:
       - success
       - error
+    ProcessSourceResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: The source ID
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          description: Current processing status
+        message:
+          type: string
+          description: Status message
+      required:
+      - sourceId
+      - status
   securitySchemes:
     bearerAuth:
       type: http

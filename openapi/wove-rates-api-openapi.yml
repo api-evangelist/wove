@@ -193,6 +193,280 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    RateSurcharge:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Surcharge code (e.g., BAF, CAF, THC)
+          example: BAF
+        name:
+          type: string
+          description: Surcharge display name
+          example: Bunker Adjustment Factor
+        applicability:
+          type: string
+          enum:
+          - inclusive
+          - subject_to
+          - not_subject_to
+          - not_applicable
+          description: Whether this surcharge is included in base rate or additional
+        basis:
+          type: string
+          description: Charging basis (e.g., per_container, per_bl, percentage)
+          example: per_container
+        amount:
+          type: number
+          description: Default surcharge amount (when not container-specific)
+        currency:
+          type: string
+          example: USD
+        containerRates:
+          description: Container-specific surcharge amounts
+          type: array
+          items:
+            $ref: '#/components/schemas/SurchargeContainerRate'
+        percentage:
+          type: number
+          description: Percentage-based surcharge (if applicable)
+        applicablePorts:
+          type: array
+          items:
+            type: string
+          description: Specific ports this surcharge applies to
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+      required:
+      - code
+      - name
+      - applicability
+    LocationInfo:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Location code (UN/LOCODE for ports)
+          example: CNSHA
+        name:
+          type: string
+          description: Location display name
+          example: Shanghai
+        type:
+          type: string
+          enum:
+          - port
+          - city
+          - address
+          - region
+          description: Type of location
+      required:
+      - code
+      - type
+    CombinedRate:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the rate (hash for deduplication)
+        placeOfReceipt:
+          description: Origin inland point (for pre-carriage)
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        portOfLoading:
+          description: Port of loading
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        portOfDischarge:
+          description: Port of discharge
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        placeOfDelivery:
+          description: Destination inland point (for on-carriage)
+          allOf:
+          - $ref: '#/components/schemas/LocationInfo'
+        viaPorts:
+          description: Transshipment ports in order
+          type: array
+          items:
+            $ref: '#/components/schemas/LocationInfo'
+        carrierCode:
+          type: string
+          description: Carrier SCAC code
+        carrierName:
+          type: string
+          description: Carrier display name
+        effectiveDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+        commodityType:
+          type: string
+        transitTime:
+          type: integer
+          description: Transit time in days
+        legs:
+          description: Rate breakdown by leg (pre-carriage, main, on-carriage)
+          type: array
+          items:
+            $ref: '#/components/schemas/RateLeg'
+        containerRates:
+          description: Container-specific pricing
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedContainerRate'
+        surcharges:
+          description: Applicable surcharges
+          type: array
+          items:
+            $ref: '#/components/schemas/RateSurcharge'
+        sourceId:
+          type: string
+          description: Source ID where this rate originated
+        sourceName:
+          type: string
+          description: Source filename
+      required:
+      - id
+      - portOfLoading
+      - portOfDischarge
+      - carrierCode
+      - containerRates
+      - sourceId
+      - sourceName
+    LegContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+        amount:
+          type: number
+          description: Rate amount
+        currency:
+          type: string
+          description: Currency code (ISO 4217)
+          example: USD
+      required:
+      - containerSize
+      - containerType
+      - amount
+      - currency
+    SurchargeContainerRate:
+      type: object
+      properties:
+        containerSize:
+          type: string
+          enum:
+          - 20ft
+          - 40ft
+          - 40ft_hc
+          - 45ft
+        containerType:
+          type: string
+          enum:
+          - dry
+          - reefer
+          - nor
+          - general
+          - all
+        amount:
+          type: number
+        currency:
+          type: string
+          example: USD
+      required:
+      - containerSize
+      - amount
+      - currency
+    QueryBankRateQueryResponse:
+      type: object
+      properties:
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombinedRate'
+        metadata:
+          type: object
+          properties:
+            totalRates:
+              type: integer
+              description: Total number of matching rates
+            sourcesSearched:
+              type: integer
+              description: Number of sources searched
+            queryTimeMs:
+              type: integer
+              description: Query execution time in milliseconds
+    RateLeg:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - pre_carriage
+          - main
+          - on_carriage
+          description: Leg type
+        origin:
+          $ref: '#/components/schemas/LocationInfo'
+        destination:
+          $ref: '#/components/schemas/LocationInfo'
+        mode:
+          type: string
+          enum:
+          - truck
+          - rail
+          - barge
+          - ocean
+          description: Transport mode for this leg
+        rates:
+          description: Container rates for this specific leg
+          type: array
+          items:
+            $ref: '#/components/schemas/LegContainerRate'
+      required:
+      - type
+      - origin
+      - destination
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
     QueryBankRateQueryRequest:
       type: object
       properties:
@@ -311,280 +585,6 @@ components:
           description: Per-leg breakdown of the total amount
       required:
       - containerType
-      - containerSize
-      - amount
-      - currency
-    LocationInfo:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Location code (UN/LOCODE for ports)
-          example: CNSHA
-        name:
-          type: string
-          description: Location display name
-          example: Shanghai
-        type:
-          type: string
-          enum:
-          - port
-          - city
-          - address
-          - region
-          description: Type of location
-      required:
-      - code
-      - type
-    LegContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-        amount:
-          type: number
-          description: Rate amount
-        currency:
-          type: string
-          description: Currency code (ISO 4217)
-          example: USD
-      required:
-      - containerSize
-      - containerType
-      - amount
-      - currency
-    RateLeg:
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-          - pre_carriage
-          - main
-          - on_carriage
-          description: Leg type
-        origin:
-          $ref: '#/components/schemas/LocationInfo'
-        destination:
-          $ref: '#/components/schemas/LocationInfo'
-        mode:
-          type: string
-          enum:
-          - truck
-          - rail
-          - barge
-          - ocean
-          description: Transport mode for this leg
-        rates:
-          description: Container rates for this specific leg
-          type: array
-          items:
-            $ref: '#/components/schemas/LegContainerRate'
-      required:
-      - type
-      - origin
-      - destination
-    RateSurcharge:
-      type: object
-      properties:
-        code:
-          type: string
-          description: Surcharge code (e.g., BAF, CAF, THC)
-          example: BAF
-        name:
-          type: string
-          description: Surcharge display name
-          example: Bunker Adjustment Factor
-        applicability:
-          type: string
-          enum:
-          - inclusive
-          - subject_to
-          - not_subject_to
-          - not_applicable
-          description: Whether this surcharge is included in base rate or additional
-        basis:
-          type: string
-          description: Charging basis (e.g., per_container, per_bl, percentage)
-          example: per_container
-        amount:
-          type: number
-          description: Default surcharge amount (when not container-specific)
-        currency:
-          type: string
-          example: USD
-        containerRates:
-          description: Container-specific surcharge amounts
-          type: array
-          items:
-            $ref: '#/components/schemas/SurchargeContainerRate'
-        percentage:
-          type: number
-          description: Percentage-based surcharge (if applicable)
-        applicablePorts:
-          type: array
-          items:
-            type: string
-          description: Specific ports this surcharge applies to
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-      required:
-      - code
-      - name
-      - applicability
-    QueryBankRateQueryResponse:
-      type: object
-      properties:
-        rates:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombinedRate'
-        metadata:
-          type: object
-          properties:
-            totalRates:
-              type: integer
-              description: Total number of matching rates
-            sourcesSearched:
-              type: integer
-              description: Number of sources searched
-            queryTimeMs:
-              type: integer
-              description: Query execution time in milliseconds
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
-    CombinedRate:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the rate (hash for deduplication)
-        placeOfReceipt:
-          description: Origin inland point (for pre-carriage)
-          allOf:
-          - $ref: '#/components/schemas/LocationInfo'
-        portOfLoading:
-          description: Port of loading
-          allOf:
-          - $ref: '#/components/schemas/LocationInfo'
-        portOfDischarge:
-          description: Port of discharge
-          allOf:
-          - $ref: '#/components/schemas/LocationInfo'
-        placeOfDelivery:
-          description: Destination inland point (for on-carriage)
-          allOf:
-          - $ref: '#/components/schemas/LocationInfo'
-        viaPorts:
-          description: Transshipment ports in order
-          type: array
-          items:
-            $ref: '#/components/schemas/LocationInfo'
-        carrierCode:
-          type: string
-          description: Carrier SCAC code
-        carrierName:
-          type: string
-          description: Carrier display name
-        effectiveDate:
-          type: string
-          format: date
-        expiryDate:
-          type: string
-          format: date
-        commodityType:
-          type: string
-        transitTime:
-          type: integer
-          description: Transit time in days
-        legs:
-          description: Rate breakdown by leg (pre-carriage, main, on-carriage)
-          type: array
-          items:
-            $ref: '#/components/schemas/RateLeg'
-        containerRates:
-          description: Container-specific pricing
-          type: array
-          items:
-            $ref: '#/components/schemas/CombinedContainerRate'
-        surcharges:
-          description: Applicable surcharges
-          type: array
-          items:
-            $ref: '#/components/schemas/RateSurcharge'
-        sourceId:
-          type: string
-          description: Source ID where this rate originated
-        sourceName:
-          type: string
-          description: Source filename
-      required:
-      - id
-      - portOfLoading
-      - portOfDischarge
-      - carrierCode
-      - containerRates
-      - sourceId
-      - sourceName
-    SurchargeContainerRate:
-      type: object
-      properties:
-        containerSize:
-          type: string
-          enum:
-          - 20ft
-          - 40ft
-          - 40ft_hc
-          - 45ft
-        containerType:
-          type: string
-          enum:
-          - dry
-          - reefer
-          - nor
-          - general
-          - all
-        amount:
-          type: number
-        currency:
-          type: string
-          example: USD
-      required:
       - containerSize
       - amount
       - currency

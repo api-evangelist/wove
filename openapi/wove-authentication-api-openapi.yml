@@ -125,6 +125,21 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        message:
+          type: string
+          description: Optional success message
+      required:
+      - success
+      - data
     TokenRequest:
       type: object
       properties:
@@ -147,37 +162,6 @@ components:
       - grant_type
       - client_id
       - client_secret
-    TokenResponse:
-      type: object
-      properties:
-        access_token:
-          type: string
-          example: eyJhbGciOiJIUzI1NiIs...
-        token_type:
-          type: string
-          example: Bearer
-        expires_in:
-          type: integer
-          example: 3600
-          description: Token lifetime in seconds
-        scope:
-          type: string
-          example: shipments:read documents:read validation:create
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          description: Response data (varies by endpoint)
-        message:
-          type: string
-          description: Optional success message
-      required:
-      - success
-      - data
     ErrorResponse:
       type: object
       properties:
@@ -199,6 +183,22 @@ components:
       required:
       - success
       - error
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 3600
+          description: Token lifetime in seconds
+        scope:
+          type: string
+          example: shipments:read documents:read validation:create
   securitySchemes:
     bearerAuth:
       type: http

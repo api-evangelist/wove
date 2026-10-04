@@ -180,6 +180,57 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    AddSourceToQueryBankResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+        linkedAt:
+          type: string
+          format: date-time
+      required:
+      - sourceId
+      - linkedAt
+    AddSourceToQueryBankRequest:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: The source ID to add to Query Bank
+      required:
+      - sourceId
+    RemoveSourceFromQueryBankResponse:
+      type: object
+      properties:
+        sourceId:
+          type: string
+        unlinkedAt:
+          type: string
+          format: date-time
+      required:
+      - sourceId
+      - unlinkedAt
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
     ExternalQueryBankSource:
       type: object
       properties:
@@ -210,57 +261,6 @@ components:
           type: string
           format: date-time
           description: When the source was added to Query Bank
-    RemoveSourceFromQueryBankResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-        unlinkedAt:
-          type: string
-          format: date-time
-      required:
-      - sourceId
-      - unlinkedAt
-    AddSourceToQueryBankResponse:
-      type: object
-      properties:
-        sourceId:
-          type: string
-        linkedAt:
-          type: string
-          format: date-time
-      required:
-      - sourceId
-      - linkedAt
-    ErrorResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
-    AddSourceToQueryBankRequest:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: The source ID to add to Query Bank
-      required:
-      - sourceId
   securitySchemes:
     bearerAuth:
       type: http

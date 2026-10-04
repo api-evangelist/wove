@@ -1188,69 +1188,77 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    ShipmentContainer:
+    ShipmentSummary:
       type: object
       properties:
         id:
           type: string
-          example: '1014810279825727492'
-        number:
+          example: '1014810279825727490'
+        status:
           type: string
-          example: MSKU1234567
-        size:
-          type: string
-          example: '40'
-        type:
-          type: string
-          example: HC
-        sizeType:
-          type: string
-          example: 40HC
-          description: Combined size and type (e.g., 20GP, 40HC)
-        sealNumber:
-          type: string
-          example: SEAL123456
-        quantity:
-          type: integer
-          example: 1
-        packages:
-          type: array
-          items:
-            $ref: '#/components/schemas/ShipmentPackage'
-          description: Packages contained in this container
-    ShipmentCarrier:
-      type: object
-      properties:
-        code:
-          type: string
-          example: MAEU
+          enum:
+          - draft
+          - pending
+          - booked
+          - in_transit
+          - delivered
+          - cancelled
+          example: draft
+          description: Current status of the shipment
         name:
           type: string
-          example: Maersk Line
-      required:
-      - code
-      - name
-    AddressLocation:
-      type: object
-      properties:
-        address1:
+          example: External API Test Shipment
+        shipmentType:
           type: string
-          example: 123 Main St
-        address2:
+          enum:
+          - FCL
+          - LCL
+          - AIR
+          - LTL
+          - FTL
+          - RAIL
+          example: LCL
+        commodity:
           type: string
-          example: Suite 100
-        city:
+          example: Electronics
+        portOfLoading:
+          $ref: '#/components/schemas/PortLocation'
+        portOfDischarge:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfReceiptType:
           type: string
-          example: New York
-        province:
+          enum:
+          - Port
+          - Airport
+          - Door
+        placeOfReceiptPort:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfReceiptAirport:
+          $ref: '#/components/schemas/AirportLocation'
+        placeOfReceiptAddress:
+          $ref: '#/components/schemas/AddressLocation'
+        placeOfDeliveryType:
           type: string
-          example: NY
-        postalCode:
+          enum:
+          - Port
+          - Airport
+          - Door
+        placeOfDeliveryPort:
+          $ref: '#/components/schemas/PortLocation'
+        placeOfDeliveryAirport:
+          $ref: '#/components/schemas/AirportLocation'
+        placeOfDeliveryAddress:
+          $ref: '#/components/schemas/AddressLocation'
+        createdAt:
           type: string
-          example: '10001'
-        country:
+          format: date-time
+        updatedAt:
           type: string
-          example: US
+          format: date-time
+        documentCount:
+          type: integer
+          example: 5
+          description: Number of documents attached to this shipment
     ShipmentDetails:
       allOf:
       - $ref: '#/components/schemas/ShipmentSummary'
@@ -1374,44 +1382,118 @@ components:
           currency:
             type: string
             nullable: true
-    CreatePackageRequest:
+    ShipmentContainer:
       type: object
       properties:
+        id:
+          type: string
+          example: '1014810279825727492'
+        number:
+          type: string
+          example: MSKU1234567
+        size:
+          type: string
+          example: '40'
+        type:
+          type: string
+          example: HC
+        sizeType:
+          type: string
+          example: 40HC
+          description: Combined size and type (e.g., 20GP, 40HC)
+        sealNumber:
+          type: string
+          example: SEAL123456
+        quantity:
+          type: integer
+          example: 1
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipmentPackage'
+          description: Packages contained in this container
+    ShipmentPackage:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1014810279825727493'
         containerId:
           type: string
           nullable: true
-          description: Container ID (null for loose packages)
+          description: ID of the container this package belongs to (null for loose packages)
         packageNumber:
           type: string
-          description: Package number/identifier
+          example: PKG001
         packageType:
           type: string
-          description: Type of package (e.g., CARTON, PALLET)
+          example: CARTON
         description:
           type: string
-          description: Package description
+          nullable: true
         packageCount:
           type: integer
-          description: Number of packages
-          minimum: 1
+          example: 1
         lineNumber:
           type: integer
-          description: Line number for ordering
+          nullable: true
         grossWeight:
           type: number
-          description: Gross weight of package
+          nullable: true
         netWeight:
           type: number
-          description: Net weight of package
+          nullable: true
         volume:
           type: number
-          description: Volume of package
+          nullable: true
         weightUnit:
           type: string
-          description: Unit for weight measurements
+          nullable: true
         volumeUnit:
           type: string
-          description: Unit for volume measurements
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShipmentItem'
+          description: Items contained in this package
+    AddressLocation:
+      type: object
+      properties:
+        address1:
+          type: string
+          example: 123 Main St
+        address2:
+          type: string
+          example: Suite 100
+        city:
+          type: string
+          example: New York
+        province:
+          type: string
+          example: NY
+        postalCode:
+          type: string
+          example: '10001'
+        country:
+          type: string
+          example: US
+    PortLocation:
+      type: object
+      properties:
+        portCode:
+          type: string
+          example: USLAX
+        portName:
+          type: string
+          example: Los Angeles
+        countryCode:
+          type: string
+          example: US
+      required:
+      - portCode
+    Container:
+      $ref: '#/components/schemas/ShipmentContainer'
     MergeJob:
       type: object
       properties:
@@ -1448,188 +1530,75 @@ components:
           type: string
           format: date-time
           nullable: true
-    Address:
-      type: object
-      description: Physical address
-      properties:
-        street1:
-          type: string
-          description: Street address line 1
-          nullable: true
-        street2:
-          type: string
-          description: Street address line 2
-          nullable: true
-        city:
-          type: string
-          description: City name
-          nullable: true
-        state:
-          type: string
-          description: State or province
-          nullable: true
-        postalCode:
-          type: string
-          description: Postal or ZIP code
-          nullable: true
-        country:
-          type: string
-          description: Country code (2-letter ISO)
-          nullable: true
-    Location:
-      oneOf:
-      - type: object
-        properties:
-          type:
-            type: string
-            enum:
-            - Port
-          portCode:
-            type: string
-            example: USNYC
-          portName:
-            type: string
-            example: New York/Newark
-          countryCode:
-            type: string
-            example: US
-        required:
-        - type
-        - portCode
-      - type: object
-        properties:
-          type:
-            type: string
-            enum:
-            - Airport
-          airportCode:
-            type: string
-            example: JFK
-          airportName:
-            type: string
-            example: John F. Kennedy International Airport
-          countryCode:
-            type: string
-            example: US
-        required:
-        - type
-        - airportCode
-      - type: object
-        properties:
-          type:
-            type: string
-            enum:
-            - Door
-          address1:
-            type: string
-            example: 123 Main St
-          address2:
-            type: string
-            example: Suite 100
-          city:
-            type: string
-            example: New York
-          province:
-            type: string
-            example: NY
-          postalCode:
-            type: string
-            example: '10001'
-          country:
-            type: string
-            example: US
-        required:
-        - type
-        - address1
-        - city
-        - country
-    ShipmentEvent:
+    ShipmentItem:
       type: object
       properties:
         id:
           type: string
-          example: '1014810279825727495'
-        eventType:
-          type: string
-          example: status_change
-        eventDate:
-          type: string
-          format: date-time
-        eventLocation:
-          type: string
-          example: USLAX
-        eventDescription:
-          type: string
-          example: Status changed from draft to booked
-        createdAt:
-          type: string
-          format: date-time
-    UpdateContainerRequest:
-      type: object
-      properties:
-        number:
-          type: string
-          description: Container number/identifier
-        sizeType:
-          type: string
-          description: Container size and type
-        sealNumber:
-          type: string
-          description: Container seal number
-        quantity:
+          example: '1014810279825727491'
+        lineNumber:
           type: integer
-          description: Number of containers
-          minimum: 1
-    ValidationItem:
-      type: object
-      properties:
-        id:
+          example: 1
+        sku:
           type: string
-          example: '1014810279825727496'
-        crossValidationResultId:
+          example: SKU-12345
+        partNumber:
           type: string
-        shipmentId:
+          example: PN-67890
+        description:
           type: string
-        fieldName:
+          example: Electronic Component
+        quantity:
+          type: number
+          example: 100
+        unitOfMeasure:
           type: string
-          example: invoiceNumber
-        status:
+          example: PCS
+        unitPrice:
+          type: number
+          example: 25.5
+        amount:
+          type: number
+          example: 2550.0
+        currency:
           type: string
-          example: error
-        reason:
+          example: USD
+        countryOfOrigin:
           type: string
-          example: Invoice numbers do not match across documents
-        suggestion:
+          example: CN
+        hsCode:
           type: string
-          example: Use invoice number from the commercial invoice
-        files:
-          type: array
-          items:
-            type: string
-        documentIds:
-          type: array
-          items:
-            type: string
-        actionStatus:
+          example: 8541.10.00
+        weight:
+          type: number
+          example: 150.5
+        weightUnit:
           type: string
-          enum:
-          - PENDING
-          - ACCEPTED
-          - IGNORED
-          - OVERRIDDEN
-        actionTakenById:
+          example: KG
+        volume:
+          type: number
+          example: 2.5
+        volumeUnit:
           type: string
-        actionTakenAt:
+          example: CBM
+        packageNumber:
           type: string
-          format: date-time
-        actionReason:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+          example: PKG-001
+        dimensions:
+          type: object
+          properties:
+            length:
+              type: number
+              example: 100
+            width:
+              type: number
+              example: 50
+            height:
+              type: number
+              example: 50
+            unit:
+              type: string
+              example: CM
     UpdateItemRequest:
       type: object
       properties:
@@ -1660,30 +1629,24 @@ components:
           type: number
         weightUnit:
           type: string
-    UpdatePackageRequest:
+    UpdateValidationItemRequest:
       type: object
       properties:
-        packageNumber:
+        actionStatus:
           type: string
-        packageType:
+          enum:
+          - ACCEPTED
+          - IGNORED
+          - OVERRIDDEN
+        actionReason:
           type: string
-        description:
-          type: string
-        packageCount:
-          type: integer
-          minimum: 1
-        lineNumber:
-          type: integer
-        grossWeight:
-          type: number
-        netWeight:
-          type: number
-        volume:
-          type: number
-        weightUnit:
-          type: string
-        volumeUnit:
-          type: string
+      required:
+      - actionStatus
+    UpdateShipmentRequest:
+      allOf:
+      - $ref: '#/components/schemas/CreateShipmentRequest'
+      - type: object
+        description: All fields from CreateShipmentRequest are optional for updates
     CrossValidationJob:
       type: object
       properties:
@@ -1771,118 +1734,53 @@ components:
           type: string
           format: date-time
           nullable: true
-    AirportLocation:
+    UpdatePackageRequest:
       type: object
       properties:
-        airportCode:
+        packageNumber:
           type: string
-          example: LAX
-        airportName:
+        packageType:
           type: string
-          example: Los Angeles International Airport
-        countryCode:
+        description:
           type: string
-          example: US
-      required:
-      - airportCode
-    ShipmentSummary:
+        packageCount:
+          type: integer
+          minimum: 1
+        lineNumber:
+          type: integer
+        grossWeight:
+          type: number
+        netWeight:
+          type: number
+        volume:
+          type: number
+        weightUnit:
+          type: string
+        volumeUnit:
+          type: string
+    Carrier:
+      $ref: '#/components/schemas/ShipmentCarrier'
+    ReferenceNumber:
       type: object
       properties:
         id:
           type: string
-          example: '1014810279825727490'
-        status:
+          example: '1014810279825727493'
+        type:
           type: string
-          enum:
-          - draft
-          - pending
-          - booked
-          - in_transit
-          - delivered
-          - cancelled
-          example: draft
-          description: Current status of the shipment
-        name:
+          example: booking
+          description: Type of reference number (booking, invoice, po, etc.)
+        displayNumber:
           type: string
-          example: External API Test Shipment
-        shipmentType:
+          example: BOOK-2024-001
+        cleanedNumber:
           type: string
-          enum:
-          - FCL
-          - LCL
-          - AIR
-          - LTL
-          - FTL
-          - RAIL
-          example: LCL
-        commodity:
-          type: string
-          example: Electronics
-        portOfLoading:
-          $ref: '#/components/schemas/PortLocation'
-        portOfDischarge:
-          $ref: '#/components/schemas/PortLocation'
-        placeOfReceiptType:
-          type: string
-          enum:
-          - Port
-          - Airport
-          - Door
-        placeOfReceiptPort:
-          $ref: '#/components/schemas/PortLocation'
-        placeOfReceiptAirport:
-          $ref: '#/components/schemas/AirportLocation'
-        placeOfReceiptAddress:
-          $ref: '#/components/schemas/AddressLocation'
-        placeOfDeliveryType:
-          type: string
-          enum:
-          - Port
-          - Airport
-          - Door
-        placeOfDeliveryPort:
-          $ref: '#/components/schemas/PortLocation'
-        placeOfDeliveryAirport:
-          $ref: '#/components/schemas/AirportLocation'
-        placeOfDeliveryAddress:
-          $ref: '#/components/schemas/AddressLocation'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-        documentCount:
-          type: integer
-          example: 5
-          description: Number of documents attached to this shipment
-    Organization:
-      type: object
-      description: Organization/company information
-      properties:
-        name:
-          type: string
-          description: Organization name
-        code:
-          type: string
-          description: Organization code or identifier
-          nullable: true
+          example: BOOK2024001
+          description: Cleaned version without special characters
       required:
-      - name
-    PortLocation:
-      type: object
-      properties:
-        portCode:
-          type: string
-          example: USLAX
-        portName:
-          type: string
-          example: Los Angeles
-        countryCode:
-          type: string
-          example: US
-      required:
-      - portCode
+      - id
+      - type
+      - displayNumber
     CreateItemRequest:
       type: object
       properties:
@@ -1934,77 +1832,6 @@ components:
         weightUnit:
           type: string
           description: Unit for weight measurement
-    Container:
-      $ref: '#/components/schemas/ShipmentContainer'
-    CreateContainerRequest:
-      type: object
-      required:
-      - number
-      - sizeType
-      properties:
-        number:
-          type: string
-          description: Container number/identifier
-          example: MSKU1234567
-        sizeType:
-          type: string
-          description: Container size and type (e.g., 20GP, 40HC)
-          example: 20GP
-        sealNumber:
-          type: string
-          description: Container seal number
-        quantity:
-          type: integer
-          description: Number of containers
-          default: 1
-          minimum: 1
-    Carrier:
-      $ref: '#/components/schemas/ShipmentCarrier'
-    ShipmentPackage:
-      type: object
-      properties:
-        id:
-          type: string
-          example: '1014810279825727493'
-        containerId:
-          type: string
-          nullable: true
-          description: ID of the container this package belongs to (null for loose packages)
-        packageNumber:
-          type: string
-          example: PKG001
-        packageType:
-          type: string
-          example: CARTON
-        description:
-          type: string
-          nullable: true
-        packageCount:
-          type: integer
-          example: 1
-        lineNumber:
-          type: integer
-          nullable: true
-        grossWeight:
-          type: number
-          nullable: true
-        netWeight:
-          type: number
-          nullable: true
-        volume:
-          type: number
-          nullable: true
-        weightUnit:
-          type: string
-          nullable: true
-        volumeUnit:
-          type: string
-          nullable: true
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ShipmentItem'
-          description: Items contained in this package
     CreateShipmentRequest:
       type: object
       properties:
@@ -2058,6 +1885,77 @@ components:
           additionalProperties: true
       required:
       - name
+    ShipmentCarrier:
+      type: object
+      properties:
+        code:
+          type: string
+          example: MAEU
+        name:
+          type: string
+          example: Maersk Line
+      required:
+      - code
+      - name
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Invalid input parameters
+            details:
+              type: object
+              description: Additional error context
+      required:
+      - success
+      - error
+    CreatePackageRequest:
+      type: object
+      properties:
+        containerId:
+          type: string
+          nullable: true
+          description: Container ID (null for loose packages)
+        packageNumber:
+          type: string
+          description: Package number/identifier
+        packageType:
+          type: string
+          description: Type of package (e.g., CARTON, PALLET)
+        description:
+          type: string
+          description: Package description
+        packageCount:
+          type: integer
+          description: Number of packages
+          minimum: 1
+        lineNumber:
+          type: integer
+          description: Line number for ordering
+        grossWeight:
+          type: number
+          description: Gross weight of package
+        netWeight:
+          type: number
+          description: Net weight of package
+        volume:
+          type: number
+          description: Volume of package
+        weightUnit:
+          type: string
+          description: Unit for weight measurements
+        volumeUnit:
+          type: string
+          description: Unit for volume measurements
     UpdateShipmentDetailsRequest:
       type: object
       description: 'Request body for updating shipment-level details only.
@@ -2241,135 +2139,237 @@ components:
               nullable: true
               description: Currency code for the total value (ISO 4217)
               example: USD
-    UpdateValidationItemRequest:
+    CreateContainerRequest:
+      type: object
+      required:
+      - number
+      - sizeType
+      properties:
+        number:
+          type: string
+          description: Container number/identifier
+          example: MSKU1234567
+        sizeType:
+          type: string
+          description: Container size and type (e.g., 20GP, 40HC)
+          example: 20GP
+        sealNumber:
+          type: string
+          description: Container seal number
+        quantity:
+          type: integer
+          description: Number of containers
+          default: 1
+          minimum: 1
+    ValidationItem:
       type: object
       properties:
+        id:
+          type: string
+          example: '1014810279825727496'
+        crossValidationResultId:
+          type: string
+        shipmentId:
+          type: string
+        fieldName:
+          type: string
+          example: invoiceNumber
+        status:
+          type: string
+          example: error
+        reason:
+          type: string
+          example: Invoice numbers do not match across documents
+        suggestion:
+          type: string
+          example: Use invoice number from the commercial invoice
+        files:
+          type: array
+          items:
+            type: string
+        documentIds:
+          type: array
+          items:
+            type: string
         actionStatus:
           type: string
           enum:
+          - PENDING
           - ACCEPTED
           - IGNORED
           - OVERRIDDEN
+        actionTakenById:
+          type: string
+        actionTakenAt:
+          type: string
+          format: date-time
         actionReason:
           type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AirportLocation:
+      type: object
+      properties:
+        airportCode:
+          type: string
+          example: LAX
+        airportName:
+          type: string
+          example: Los Angeles International Airport
+        countryCode:
+          type: string
+          example: US
       required:
-      - actionStatus
-    ReferenceNumber:
+      - airportCode
+    Organization:
+      type: object
+      description: Organization/company information
+      properties:
+        name:
+          type: string
+          description: Organization name
+        code:
+          type: string
+          description: Organization code or identifier
+          nullable: true
+      required:
+      - name
+    ShipmentEvent:
       type: object
       properties:
         id:
           type: string
-          example: '1014810279825727493'
-        type:
+          example: '1014810279825727495'
+        eventType:
           type: string
-          example: booking
-          description: Type of reference number (booking, invoice, po, etc.)
-        displayNumber:
+          example: status_change
+        eventDate:
           type: string
-          example: BOOK-2024-001
-        cleanedNumber:
+          format: date-time
+        eventLocation:
           type: string
-          example: BOOK2024001
-          description: Cleaned version without special characters
-      required:
-      - id
-      - type
-      - displayNumber
-    ErrorResponse:
+          example: USLAX
+        eventDescription:
+          type: string
+          example: Status changed from draft to booked
+        createdAt:
+          type: string
+          format: date-time
+    Address:
       type: object
+      description: Physical address
       properties:
-        success:
-          type: boolean
-          example: false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              example: VALIDATION_ERROR
-            message:
-              type: string
-              example: Invalid input parameters
-            details:
-              type: object
-              description: Additional error context
-      required:
-      - success
-      - error
-    ShipmentItem:
-      type: object
-      properties:
-        id:
+        street1:
           type: string
-          example: '1014810279825727491'
-        lineNumber:
-          type: integer
-          example: 1
-        sku:
+          description: Street address line 1
+          nullable: true
+        street2:
           type: string
-          example: SKU-12345
-        partNumber:
+          description: Street address line 2
+          nullable: true
+        city:
           type: string
-          example: PN-67890
-        description:
+          description: City name
+          nullable: true
+        state:
           type: string
-          example: Electronic Component
-        quantity:
-          type: number
-          example: 100
-        unitOfMeasure:
+          description: State or province
+          nullable: true
+        postalCode:
           type: string
-          example: PCS
-        unitPrice:
-          type: number
-          example: 25.5
-        amount:
-          type: number
-          example: 2550.0
-        currency:
+          description: Postal or ZIP code
+          nullable: true
+        country:
           type: string
-          example: USD
-        countryOfOrigin:
-          type: string
-          example: CN
-        hsCode:
-          type: string
-          example: 8541.10.00
-        weight:
-          type: number
-          example: 150.5
-        weightUnit:
-          type: string
-          example: KG
-        volume:
-          type: number
-          example: 2.5
-        volumeUnit:
-          type: string
-          example: CBM
-        packageNumber:
-          type: string
-          example: PKG-001
-        dimensions:
-          type: object
-          properties:
-            length:
-              type: number
-              example: 100
-            width:
-              type: number
-              example: 50
-            height:
-              type: number
-              example: 50
-            unit:
-              type: string
-              example: CM
-    UpdateShipmentRequest:
-      allOf:
-      - $ref: '#/components/schemas/CreateShipmentRequest'
+          description: Country code (2-letter ISO)
+          nullable: true
+    Location:
+      oneOf:
       - type: object
-        description: All fields from CreateShipmentRequest are optional for updates
+        properties:
+          type:
+            type: string
+            enum:
+            - Port
+          portCode:
+            type: string
+            example: USNYC
+          portName:
+            type: string
+            example: New York/Newark
+          countryCode:
+            type: string
+            example: US
+        required:
+        - type
+        - portCode
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - Airport
+          airportCode:
+            type: string
+            example: JFK
+          airportName:
+            type: string
+            example: John F. Kennedy International Airport
+          countryCode:
+            type: string
+            example: US
+        required:
+        - type
+        - airportCode
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - Door
+          address1:
+            type: string
+            example: 123 Main St
+          address2:
+            type: string
+            example: Suite 100
+          city:
+            type: string
+            example: New York
+          province:
+            type: string
+            example: NY
+          postalCode:
+            type: string
+            example: '10001'
+          country:
+            type: string
+            example: US
+        required:
+        - type
+        - address1
+        - city
+        - country
+    UpdateContainerRequest:
+      type: object
+      properties:
+        number:
+          type: string
+          description: Container number/identifier
+        sizeType:
+          type: string
+          description: Container size and type
+        sealNumber:
+          type: string
+          description: Container seal number
+        quantity:
+          type: integer
+          description: Number of containers
+          minimum: 1
   securitySchemes:
     bearerAuth:
       type: http
