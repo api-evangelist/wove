@@ -492,6 +492,21 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: Response data (varies by endpoint)
+        message:
+          type: string
+          description: Optional success message
+      required:
+      - success
+      - data
     Webhook:
       type: object
       properties:
@@ -561,21 +576,6 @@ components:
       required:
       - url
       - events
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-        data:
-          type: object
-          description: Response data (varies by endpoint)
-        message:
-          type: string
-          description: Optional success message
-      required:
-      - success
-      - data
   securitySchemes:
     bearerAuth:
       type: http

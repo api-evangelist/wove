@@ -1585,37 +1585,6 @@ paths:
       x-operation-id-source: derived
 components:
   schemas:
-    MergeJobResponse:
-      type: object
-      properties:
-        jobId:
-          type: string
-          example: '1014851234567890123'
-        status:
-          type: string
-          enum:
-          - pending
-          - processing
-          - completed
-          - failed
-          example: pending
-        documentIds:
-          type: array
-          items:
-            type: string
-        message:
-          type: string
-          example: Merge job created. Use the job ID to check status.
-    MergeDocumentsRequest:
-      type: object
-      properties:
-        documentIds:
-          type: array
-          items:
-            type: string
-          minItems: 2
-      required:
-      - documentIds
     Document:
       type: object
       properties:
@@ -1667,16 +1636,52 @@ components:
         updatedAt:
           type: string
           format: date-time
-    ValidateDocumentsRequest:
+    MergeDocumentsRequest:
       type: object
       properties:
         documentIds:
           type: array
           items:
             type: string
-          minItems: 1
+          minItems: 2
       required:
       - documentIds
+    MergeJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: '1014851234567890123'
+        status:
+          type: string
+          enum:
+          - pending
+          - processing
+          - completed
+          - failed
+          example: pending
+        documentIds:
+          type: array
+          items:
+            type: string
+        message:
+          type: string
+          example: Merge job created. Use the job ID to check status.
+    DocumentHistoryEntry:
+      type: object
+      properties:
+        type:
+          type: string
+          example: edit
+        source:
+          type: string
+          example: manual
+        date:
+          type: string
+          format: date-time
+        changes:
+          type: object
+          additionalProperties: true
     ErrorResponse:
       type: object
       properties:
@@ -1698,21 +1703,16 @@ components:
       required:
       - success
       - error
-    DocumentHistoryEntry:
+    ValidateDocumentsRequest:
       type: object
       properties:
-        type:
-          type: string
-          example: edit
-        source:
-          type: string
-          example: manual
-        date:
-          type: string
-          format: date-time
-        changes:
-          type: object
-          additionalProperties: true
+        documentIds:
+          type: array
+          items:
+            type: string
+          minItems: 1
+      required:
+      - documentIds
   securitySchemes:
     bearerAuth:
       type: http

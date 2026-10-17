@@ -191,14 +191,6 @@ components:
       required:
       - sourceId
       - linkedAt
-    AddSourceToQueryBankRequest:
-      type: object
-      properties:
-        sourceId:
-          type: string
-          description: The source ID to add to Query Bank
-      required:
-      - sourceId
     RemoveSourceFromQueryBankResponse:
       type: object
       properties:
@@ -210,6 +202,14 @@ components:
       required:
       - sourceId
       - unlinkedAt
+    AddSourceToQueryBankRequest:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          description: The source ID to add to Query Bank
+      required:
+      - sourceId
     ErrorResponse:
       type: object
       properties:

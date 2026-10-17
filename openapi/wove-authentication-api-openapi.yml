@@ -140,28 +140,6 @@ components:
       required:
       - success
       - data
-    TokenRequest:
-      type: object
-      properties:
-        grant_type:
-          type: string
-          enum:
-          - client_credentials
-          example: client_credentials
-        client_id:
-          type: string
-          example: wove_prod_abc123...
-        client_secret:
-          type: string
-          example: sk_...
-        scope:
-          type: string
-          description: Space-separated list of scopes
-          example: shipments:read documents:read validation:create
-      required:
-      - grant_type
-      - client_id
-      - client_secret
     ErrorResponse:
       type: object
       properties:
@@ -199,6 +177,28 @@ components:
         scope:
           type: string
           example: shipments:read documents:read validation:create
+    TokenRequest:
+      type: object
+      properties:
+        grant_type:
+          type: string
+          enum:
+          - client_credentials
+          example: client_credentials
+        client_id:
+          type: string
+          example: wove_prod_abc123...
+        client_secret:
+          type: string
+          example: sk_...
+        scope:
+          type: string
+          description: Space-separated list of scopes
+          example: shipments:read documents:read validation:create
+      required:
+      - grant_type
+      - client_id
+      - client_secret
   securitySchemes:
     bearerAuth:
       type: http
